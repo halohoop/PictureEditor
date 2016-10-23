@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/penceil_ajust_container"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#1C1C1C"
+    android:gravity="center_vertical"
+    android:orientation="horizontal">
+
+    <com.halohoop.pictureeditor.widgets.ThicknessSeekBar
+        android:id="@+id/thickness_seek_bar"
+        app:ProgressColor="#FF2968"
+        android:layout_width="0dp"
+        android:layout_height="12dp"
+        android:layout_marginLeft="10dp"
+        android:layout_weight="2"
+        android:max="50"
+        android:paddingLeft="11dp"
+        android:paddingRight="11dp"
+        android:thumb="@drawable/thickness_ajust" />
+
+    <com.halohoop.pictureeditor.widgets.AlphaSeekBar
+        android:id="@+id/alpha_seek_bar"
+        app:ProgressColor="#FF2968"
+        android:layout_width="0dp"
+        android:layout_height="12dp"
+        android:layout_marginLeft="10dp"
+        android:layout_weight="2"
+        android:max="255"
+        android:paddingLeft="11dp"
+        android:paddingRight="11dp"
+        android:progress="255"
+        android:thumb="@drawable/alpha_ajust" />
+
+    <com.halohoop.pictureeditor.widgets.ColorShowView
+        android:id="@+id/color_show_view_in_pen_and_rubber"
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
+        android:layout_weight="1" />
+</LinearLayout>

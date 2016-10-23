@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/shapes_container"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#1C1C1C"
+    android:gravity="center_vertical"
+    android:orientation="horizontal">
+
+    <com.halohoop.pictureeditor.widgets.ShapesChooseView
+        android:id="@+id/shapes_choose_view"
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
+        android:layout_weight="7"></com.halohoop.pictureeditor.widgets.ShapesChooseView>
+
+    <com.halohoop.pictureeditor.widgets.ColorShowView
+        android:id="@+id/color_show_view_in_shapes_group"
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
+        android:layout_weight="2" />
+</LinearLayout>

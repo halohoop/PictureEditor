@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/text_detail_container"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#1C1C1C"
+    android:gravity="center">
+
+    <ImageView
+        android:id="@+id/iv_add_text"
+        android:layout_width="50dp"
+        android:layout_height="match_parent"
+        android:src="@drawable/add_text" />
+
+    <com.halohoop.pictureeditor.widgets.ColorShowView
+        android:id="@+id/color_show_view_in_text_detail_container"
+        android:layout_width="50dp"
+        android:layout_height="match_parent"
+        android:layout_toRightOf="@id/iv_add_text"
+        android:layout_weight="1" />
+</RelativeLayout>

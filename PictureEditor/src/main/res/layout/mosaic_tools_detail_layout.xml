@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/mosaic_ajust_container"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#1C1C1C">
+
+    <com.halohoop.pictureeditor.widgets.ThicknessSeekBar
+        android:id="@+id/mosaic_thickness_seek_bar"
+        android:layout_width="180dp"
+        android:layout_height="12dp"
+        android:layout_gravity="center"
+        android:layout_marginLeft="10dp"
+        android:max="50"
+        android:paddingLeft="11dp"
+        android:paddingRight="11dp"
+        android:progress="25"
+        android:thumb="@drawable/thickness_ajust"
+        app:ProgressColor="#8e8e8e" />
+
+
+</FrameLayout>
