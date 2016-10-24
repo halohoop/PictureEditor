@@ -12,6 +12,8 @@
 
 package com.halohoop.pictureeditor;
 
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.os.Bundle;
 import android.support.v4.view.ViewPager;
 import android.support.v7.app.AppCompatActivity;
@@ -27,6 +29,7 @@ import com.halohoop.pictureeditor.pieces.ShapeDetailFragment;
 import com.halohoop.pictureeditor.pieces.TextDetailFragment;
 import com.halohoop.pictureeditor.widgets.ActionsChooseView;
 import com.halohoop.pictureeditor.widgets.ColorPickerView;
+import com.halohoop.pictureeditor.widgets.MarkableView;
 import com.halohoop.pictureeditor.widgets.ShapesChooseView;
 
 import java.util.ArrayList;
@@ -47,17 +50,26 @@ public class EditorActivity extends AppCompatActivity
     private ShapeDetailFragment mShapeDetailFragment;
     private TextDetailFragment mTextDetailFragment;
     private MosaicDetailFragment mMosaicDetailFragment;
+    private MarkableView mMarkableView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_edit);
         mNoScrollVp = (ViewPager) findViewById(R.id.no_scroll_vp);
+        mMarkableView = (MarkableView) findViewById(R.id.markableview);
         mNoScrollVp.setOffscreenPageLimit(7);//important
         mActionsChooseView = (ActionsChooseView) findViewById(R.id.actions_choose_view);
         mActionsChooseView.setOnSelectedListener(this);
         mIFragments = createFragments();
         mNoScrollVp.setAdapter(new ToolDetailsPagerAdapter(getSupportFragmentManager(), mIFragments));
+        mMarkableView.postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                Bitmap bitmap = BitmapFactory.decodeResource(getResources(), R.mipmap.test_pic);
+                mMarkableView.setBitmap(bitmap);
+            }
+        }, 1500);
     }
 
     @Override
@@ -103,7 +115,7 @@ public class EditorActivity extends AppCompatActivity
             mNoScrollVp.setCurrentItem(FRAGMENT_PEN_RUBBER, true);
         } else if (index == FRAGMENT_TEXT) {
             mNoScrollVp.setCurrentItem(FRAGMENT_TEXT, true);
-        }  else if (index == FRAGMENT_SHAPE) {
+        } else if (index == FRAGMENT_SHAPE) {
             mNoScrollVp.setCurrentItem(FRAGMENT_SHAPE, true);
         } else if (index == FRAGMENT_MOSAIC) {
             mNoScrollVp.setCurrentItem(FRAGMENT_MOSAIC, true);
