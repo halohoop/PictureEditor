@@ -28,6 +28,7 @@ import com.halohoop.pictureeditor.pieces.ColorPickerDetailFragment;
 import com.halohoop.pictureeditor.pieces.IFragment;
 import com.halohoop.pictureeditor.pieces.MosaicDetailFragment;
 import com.halohoop.pictureeditor.pieces.PenRubberDetailFragment;
+import com.halohoop.pictureeditor.pieces.RubberDetailFragment;
 import com.halohoop.pictureeditor.pieces.ShapeDetailFragment;
 import com.halohoop.pictureeditor.pieces.TextDetailFragment;
 import com.halohoop.pictureeditor.utils.BitmapUtils;
@@ -46,7 +47,7 @@ public class EditorActivity extends AppCompatActivity
         SeekBar.OnSeekBarChangeListener,
         View.OnClickListener,
         ColorPickerView.ColorPickListener,
-        ShapesChooseView.OnSelectedListener,PenceilAndRubberView.PenceilOrRubberModeCallBack {
+        ShapesChooseView.OnSelectedListener, PenceilAndRubberView.PenceilOrRubberModeCallBack {
 
     private ActionsChooseView mActionsChooseView;
     private ViewPager mNoScrollVp;
@@ -56,6 +57,7 @@ public class EditorActivity extends AppCompatActivity
     private ShapeDetailFragment mShapeDetailFragment;
     private TextDetailFragment mTextDetailFragment;
     private MosaicDetailFragment mMosaicDetailFragment;
+    private RubberDetailFragment mRubberDetailFragment;
     private MarkableImageView mMarkableImageView;
     private View mProgressContainer;
     private PenceilAndRubberView mPenceilAndRubberView;
@@ -73,6 +75,7 @@ public class EditorActivity extends AppCompatActivity
         mNoScrollVp.setOffscreenPageLimit(7);//important
         mActionsChooseView = (ActionsChooseView) findViewById(R.id.actions_choose_view);
         mActionsChooseView.setOnSelectedListener(this);
+        mActionsChooseView.setAnimationEndMark(mPenceilAndRubberView);
         mIFragments = createFragments();
         mNoScrollVp.setAdapter(new ToolDetailsPagerAdapter(getSupportFragmentManager(),
                 mIFragments));
@@ -113,14 +116,10 @@ public class EditorActivity extends AppCompatActivity
         mShapeDetailFragment.setOnClickListener(this);
         mShapeDetailFragment.setListener(this);
         mMosaicDetailFragment.setOnSeekBarChangeListenerOnThicknessSeekBar(this);
+        mRubberDetailFragment.setOnSeekBarChangeListenerOnThicknessSeekBar(this);
         mColorPickerDetailFragment.setColorPickListener(this);
+        mNoScrollVp.setCurrentItem(ActionsChooseView.FRAGMENT_PEN, true);
     }
-
-    private final static int FRAGMENT_PEN_RUBBER = 0;
-    private final static int FRAGMENT_TEXT = 1;
-    private final static int FRAGMENT_SHAPE = 2;
-    private final static int FRAGMENT_MOSAIC = 3;
-    private final static int FRAGMENT_COLOR_PICKER = 4;
 
     private List<IFragment> createFragments() {
         List<IFragment> iFragments = new ArrayList<>();
@@ -128,7 +127,9 @@ public class EditorActivity extends AppCompatActivity
         mTextDetailFragment = new TextDetailFragment();
         mShapeDetailFragment = new ShapeDetailFragment();
         mMosaicDetailFragment = new MosaicDetailFragment();
+        mRubberDetailFragment = new RubberDetailFragment();
         mColorPickerDetailFragment = new ColorPickerDetailFragment();
+        iFragments.add(mRubberDetailFragment);
         iFragments.add(mPenRubberDetailFragment);
         iFragments.add(mTextDetailFragment);
         iFragments.add(mShapeDetailFragment);
@@ -142,25 +143,34 @@ public class EditorActivity extends AppCompatActivity
 
     @Override
     public void onActionSelected(int index) {
-        if (index == FRAGMENT_PEN_RUBBER) {
-            mNoScrollVp.setCurrentItem(FRAGMENT_PEN_RUBBER, true);
-        } else if (index == FRAGMENT_TEXT) {
-            mNoScrollVp.setCurrentItem(FRAGMENT_TEXT, true);
-        } else if (index == FRAGMENT_SHAPE) {
-            mNoScrollVp.setCurrentItem(FRAGMENT_SHAPE, true);
-        } else if (index == FRAGMENT_MOSAIC) {
-            mNoScrollVp.setCurrentItem(FRAGMENT_MOSAIC, true);
-        } else if (index == FRAGMENT_COLOR_PICKER) {
-            mNoScrollVp.setCurrentItem(FRAGMENT_COLOR_PICKER, true);
+        //show or hide pen and rubber
+        if (index != ActionsChooseView.FRAGMENT_PEN) {
+            mPenceilAndRubberView.setVisibility(View.GONE);
+        } else {
+            mPenceilAndRubberView.setVisibility(View.VISIBLE);
         }
+        //four mode to show
+        mNoScrollVp.setCurrentItem(index);
         mCurrentIndex = index;
     }
 
     @Override
     public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+        if (progress == 0) {
+            progress = 1;
+        }
         if (seekBar.getId() == R.id.alpha_seek_bar) {
+            mMarkableImageView.updateDrawPaintAlpha(progress);
+            LogUtils.i("" + progress);
         } else if (seekBar.getId() == R.id.thickness_seek_bar) {
+            mMarkableImageView.updateDrawPaintStrokeWidth(progress);
+            LogUtils.i("" + progress);
         } else if (seekBar.getId() == R.id.mosaic_thickness_seek_bar) {
+            mMarkableImageView.updateMosaicPaintStrokeWidth(progress);
+            LogUtils.i("" + progress);
+        } else if (seekBar.getId() == R.id.rubber_thickness_seek_bar) {
+            mMarkableImageView.updateRubberPaintStrokeWidth(progress);
+            LogUtils.i("" + progress);
         }
     }
 
@@ -179,7 +189,7 @@ public class EditorActivity extends AppCompatActivity
         if (v.getId() == R.id.color_show_view_in_pen_and_rubber
                 || v.getId() == R.id.color_show_view_in_shapes_group
                 || v.getId() == R.id.color_show_view_in_text_detail_container) {
-            mNoScrollVp.setCurrentItem(FRAGMENT_COLOR_PICKER, true);
+            mNoScrollVp.setCurrentItem(ActionsChooseView.FRAGMENT_COLOR_PICKER, true);
         } else if (v.getId() == R.id.iv_add_text) {
             //text add click
         }
@@ -204,6 +214,10 @@ public class EditorActivity extends AppCompatActivity
 
     @Override
     public void onModeSelected(PenceilAndRubberView.MODE mode) {
-
+        if (mode == PenceilAndRubberView.MODE.PENCEILON) {
+            mNoScrollVp.setCurrentItem(ActionsChooseView.FRAGMENT_PEN, true);
+        } else if (mode == PenceilAndRubberView.MODE.RUBBERON) {
+            mNoScrollVp.setCurrentItem(ActionsChooseView.FRAGMENT_RUBBER, true);
+        }
     }
 }

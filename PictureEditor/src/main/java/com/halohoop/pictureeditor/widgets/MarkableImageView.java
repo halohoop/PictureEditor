@@ -86,6 +86,22 @@ public class MarkableImageView extends PhotoView {
 
     }
 
+    public void updateDrawPaintStrokeWidth(float strokeWidth) {
+        mDrawPaint.setStrokeWidth(strokeWidth);
+    }
+    public void updateDrawPaintAlpha(int alpha) {
+        mDrawPaint.setAlpha(alpha);
+    }
+
+    public void updateRubberPaintStrokeWidth(float strokeWidth) {
+        mRubberPaint.setStrokeWidth(strokeWidth);
+    }
+
+    public void updateMosaicPaintStrokeWidth(float strokeWidth) {
+        mMosaicPaint.setStrokeWidth(strokeWidth);
+    }
+
+
     private void initMarkableView() {
         initFreePaint();
         initMosaicPaint();

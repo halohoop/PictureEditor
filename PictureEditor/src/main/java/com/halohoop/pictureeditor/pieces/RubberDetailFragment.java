@@ -1,9 +1,9 @@
 /*
  * Copyright (C) 2016, TP-LINK TECHNOLOGIES CO., LTD.
  *
- * MosaicDetailFragment.java
+ * RubberDetailFragment.java
  *
- * Mosaic mode tools detail.
+ * Rubber mode tools detail.
  *
  * Author huanghaiqi, Created at 2016-10-23
  *
@@ -22,14 +22,14 @@ import android.widget.SeekBar;
 import com.halohoop.pictureeditor.R;
 import com.halohoop.pictureeditor.widgets.ThicknessSeekBar;
 
-public class MosaicDetailFragment extends Fragment implements IFragment {
+public class RubberDetailFragment extends Fragment implements IFragment {
 
     private ThicknessSeekBar mThicknessSeekBar;
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        View view = inflater.inflate(R.layout.mosaic_tools_detail_layout, null);
-        mThicknessSeekBar = (ThicknessSeekBar) view.findViewById(R.id.mosaic_thickness_seek_bar);
+        View view = inflater.inflate(R.layout.rubber_tools_detail_layout, null);
+        mThicknessSeekBar = (ThicknessSeekBar) view.findViewById(R.id.rubber_thickness_seek_bar);
         return view;
     }
 
