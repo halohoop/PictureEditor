@@ -15,6 +15,9 @@ package com.halohoop.pictureeditor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Message;
+import android.os.SystemClock;
 import android.support.v4.view.ViewPager;
 import android.support.v7.app.AppCompatActivity;
 import android.view.View;
@@ -27,9 +30,12 @@ import com.halohoop.pictureeditor.pieces.MosaicDetailFragment;
 import com.halohoop.pictureeditor.pieces.PenRubberDetailFragment;
 import com.halohoop.pictureeditor.pieces.ShapeDetailFragment;
 import com.halohoop.pictureeditor.pieces.TextDetailFragment;
+import com.halohoop.pictureeditor.utils.BitmapUtils;
+import com.halohoop.pictureeditor.utils.LogUtils;
 import com.halohoop.pictureeditor.widgets.ActionsChooseView;
 import com.halohoop.pictureeditor.widgets.ColorPickerView;
-import com.halohoop.pictureeditor.widgets.MarkableView;
+import com.halohoop.pictureeditor.widgets.MarkableImageView;
+import com.halohoop.pictureeditor.widgets.PenceilAndRubberView;
 import com.halohoop.pictureeditor.widgets.ShapesChooseView;
 
 import java.util.ArrayList;
@@ -40,7 +46,7 @@ public class EditorActivity extends AppCompatActivity
         SeekBar.OnSeekBarChangeListener,
         View.OnClickListener,
         ColorPickerView.ColorPickListener,
-        ShapesChooseView.OnSelectedListener {
+        ShapesChooseView.OnSelectedListener,PenceilAndRubberView.PenceilOrRubberModeCallBack {
 
     private ActionsChooseView mActionsChooseView;
     private ViewPager mNoScrollVp;
@@ -50,27 +56,52 @@ public class EditorActivity extends AppCompatActivity
     private ShapeDetailFragment mShapeDetailFragment;
     private TextDetailFragment mTextDetailFragment;
     private MosaicDetailFragment mMosaicDetailFragment;
-    private MarkableView mMarkableView;
+    private MarkableImageView mMarkableImageView;
+    private View mProgressContainer;
+    private PenceilAndRubberView mPenceilAndRubberView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_edit);
+        mProgressContainer = findViewById(R.id.progress_container);
         mNoScrollVp = (ViewPager) findViewById(R.id.no_scroll_vp);
-        mMarkableView = (MarkableView) findViewById(R.id.markableview);
+        mPenceilAndRubberView = (PenceilAndRubberView) findViewById(R.id.penceil_and_rubber_view);
+        mPenceilAndRubberView.setPenceilOrRubberModeCallBack(this);
+        mMarkableImageView = (MarkableImageView) findViewById(R.id.markableview);
+        mMarkableImageView.setMaximumScale(6);
         mNoScrollVp.setOffscreenPageLimit(7);//important
         mActionsChooseView = (ActionsChooseView) findViewById(R.id.actions_choose_view);
         mActionsChooseView.setOnSelectedListener(this);
         mIFragments = createFragments();
-        mNoScrollVp.setAdapter(new ToolDetailsPagerAdapter(getSupportFragmentManager(), mIFragments));
-        mMarkableView.postDelayed(new Runnable() {
+        mNoScrollVp.setAdapter(new ToolDetailsPagerAdapter(getSupportFragmentManager(),
+                mIFragments));
+        new Thread(new Runnable() {
             @Override
             public void run() {
+                SystemClock.sleep(250);
                 Bitmap bitmap = BitmapFactory.decodeResource(getResources(), R.mipmap.test_pic1);
-                mMarkableView.setBitmap(bitmap);
+                Bitmap mosaicBitmap = BitmapUtils.mosaicIt(bitmap, 10);
+                mMarkableImageView.setMosaicBitmap(mosaicBitmap);
+                Message message = new Message();
+                message.obj = bitmap;
+                message.what = MOSAIC_BITMAP_DONE;
+                mHandler.sendMessage(message);
             }
-        }, 1500);
+        }).start();
     }
+
+    private static final int MOSAIC_BITMAP_DONE = 100;
+    private Handler mHandler = new Handler() {
+        @Override
+        public void handleMessage(Message msg) {
+            if (msg.what == MOSAIC_BITMAP_DONE) {
+                mProgressContainer.setVisibility(View.GONE);
+                Bitmap bitmap = (Bitmap) msg.obj;
+                mMarkableImageView.setImageBitmap(bitmap);
+            }
+        }
+    };
 
     @Override
     public void onWindowFocusChanged(boolean hasFocus) {
@@ -168,6 +199,11 @@ public class EditorActivity extends AppCompatActivity
 
     @Override
     public void onShapeSelected(int index) {
+
+    }
+
+    @Override
+    public void onModeSelected(PenceilAndRubberView.MODE mode) {
 
     }
 }

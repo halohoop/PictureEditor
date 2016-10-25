@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
-    android:id="@+id/activity_main"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    tools:context="com.halohoop.pictureeditor.EditorActivity">
+                xmlns:app="http://schemas.android.com/apk/res-auto"
+                xmlns:tools="http://schemas.android.com/tools"
+                android:id="@+id/activity_main"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                tools:context="com.halohoop.pictureeditor.EditorActivity">
 
     <com.halohoop.pictureeditor.widgets.ClickToSpreadView
         android:id="@+id/click_to_spread"
@@ -28,11 +28,35 @@
         android:id="@+id/no_scroll_vp"
         android:layout_width="match_parent"
         android:layout_height="60dp"
-        android:layout_above="@id/click_to_spread" />
+        android:layout_above="@id/click_to_spread"/>
 
-    <com.halohoop.pictureeditor.widgets.MarkableView
+    <com.halohoop.pictureeditor.widgets.MarkableImageView
         android:id="@+id/markableview"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_above="@id/no_scroll_vp" />
+        android:layout_above="@id/no_scroll_vp"/>
+
+    <com.halohoop.pictureeditor.widgets.PenceilAndRubberView
+        android:id="@+id/penceil_and_rubber_view"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentRight="true"
+        android:layout_marginBottom="140dp"
+        app:ResPenceilOff="@mipmap/penceiloff"
+        app:ResPenceilOn="@mipmap/penceilon"
+        app:ResRubberOff="@mipmap/rubberoff"
+        app:ResRubberOn="@mipmap/rubberon"></com.halohoop.pictureeditor.widgets.PenceilAndRubberView>
+
+    <FrameLayout
+        android:id="@+id/progress_container"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="#338e8e8e">
+
+        <ProgressBar
+            android:layout_width="50dp"
+            android:layout_height="50dp"
+            android:layout_gravity="center"/>
+    </FrameLayout>
 </RelativeLayout>
