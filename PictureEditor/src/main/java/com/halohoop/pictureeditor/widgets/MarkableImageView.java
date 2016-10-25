@@ -18,6 +18,7 @@ import android.graphics.BitmapShader;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
+import android.graphics.Path;
 import android.graphics.PointF;
 import android.graphics.RectF;
 import android.graphics.Shader;
@@ -26,8 +27,10 @@ import android.view.MotionEvent;
 
 import com.halohoop.pictureeditor.utils.LogUtils;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import uk.co.senab.photoview.PhotoView;
-import uk.co.senab.photoview.PhotoViewAttacher;
 
 public class MarkableImageView extends PhotoView {
     private Bitmap mMainBitmap;
@@ -40,6 +43,10 @@ public class MarkableImageView extends PhotoView {
     private Bitmap mMutableBitmap;
     private Canvas mDrawCanvas;
     private float mRealScaleRatio = 1;
+    private float mRealDownPosX;
+    private float mRealDownPosY;
+    private int mColor;
+    private PointF mMidPoint;
 
     public MarkableImageView(Context context) {
         this(context, null);
@@ -83,12 +90,21 @@ public class MarkableImageView extends PhotoView {
     }
 
     public void setDefaultState() {
+        mColor = parseColor("#FF2968");
+    }
 
+    private int parseColor(String colorHex) {
+        try {
+            return Color.parseColor(colorHex);
+        } catch (IllegalArgumentException iae) {
+            return Color.BLACK;
+        }
     }
 
     public void updateDrawPaintStrokeWidth(float strokeWidth) {
         mDrawPaint.setStrokeWidth(strokeWidth);
     }
+
     public void updateDrawPaintAlpha(int alpha) {
         mDrawPaint.setAlpha(alpha);
     }
@@ -106,6 +122,7 @@ public class MarkableImageView extends PhotoView {
         initFreePaint();
         initMosaicPaint();
         initRubberPaint();
+        setDefaultState();
     }
 
     @Override
@@ -178,47 +195,147 @@ public class MarkableImageView extends PhotoView {
     }
 
     private MODE mMode = MODE.EDIT;
+    private EDIT_MODE mEditMode = EDIT_MODE.PEN;
+    //是否正处在单指画的过程中,down + move,no up
+    private boolean mIsEditing = false;
+
+    public void setEditMode(EDIT_MODE editMode) {
+        this.mEditMode = editMode;
+    }
+
+
+    public EDIT_MODE getEditMode() {
+        return this.mEditMode;
+    }
 
     @Override
     public boolean dispatchTouchEvent(MotionEvent event) {
         int action = event.getAction() & MotionEvent.ACTION_MASK;
         switch (action) {
             case MotionEvent.ACTION_DOWN:
+                mIsEditing = true;
                 mDownX = event.getX(0);
                 mDownY = event.getY(0);
+                mRealDownPosX = getRealPosXOnBitmap(mDownX);
+                mRealDownPosY = getRealPosYOnBitmap(mDownY);
+                createNewMove(mRealDownPosX, mRealDownPosY);
                 super.dispatchTouchEvent(event);
                 break;
             case MotionEvent.ACTION_POINTER_DOWN:
+                mIsEditing = false;
                 mMode = MODE.ZOOM;
+                if (mEveryMoves.size() > 0) {
+                    mEveryMoves.remove(mEveryMoves.size() - 1);
+                }
                 super.dispatchTouchEvent(event);
                 break;
             case MotionEvent.ACTION_MOVE:
                 if (mMode == MODE.ZOOM) {
                     super.dispatchTouchEvent(event);
                 } else if (mMode == MODE.EDIT) {
-                    float x = event.getX();
-                    float y = event.getY();
-                    RectF displayRect = getDisplayRect();
-                    float realDrawPosX = (Math.abs(displayRect.left) + x) / mRealScaleRatio;
-                    float realDrawPosY = (y - displayRect.top) / mRealScaleRatio;
-                    mDrawCanvas.drawCircle(realDrawPosX, realDrawPosY, 20, mRubberPaint);
-                    invalidate();
+                    float moveX = event.getX(0);
+                    float moveY = event.getY(0);
+                    float realMovePosX = getRealPosXOnBitmap(moveX);
+                    float realMovePosY = getRealPosYOnBitmap(moveY);
+                    updateNewMove(realMovePosX, realMovePosY);
                 }
                 break;
             case MotionEvent.ACTION_POINTER_UP:
                 // 手指放开事件
                 if (event.getPointerCount() <= 1) {
                     mMode = MODE.EDIT;
+                    mIsEditing = false;
                 }
-                super.dispatchTouchEvent(event);
+                if (mMode == MODE.ZOOM) {
+                    super.dispatchTouchEvent(event);
+                } else if (mMode == MODE.EDIT) {
+                    float moveX = event.getX(0);
+                    float moveY = event.getY(0);
+                    float realMovePosX = getRealPosXOnBitmap(moveX);
+                    float realMovePosY = getRealPosYOnBitmap(moveY);
+                    updateNewMove(realMovePosX, realMovePosY);
+                }
                 break;
             case MotionEvent.ACTION_UP:
                 mMode = MODE.EDIT;
+                mIsEditing = false;
+                finalDrawOnBitmap();
                 super.dispatchTouchEvent(event);
                 break;
         }
         updateRealScaleRatio();
         return true;
+    }
+
+    private void createNewMove(float realDownPosX, float realDownPosY) {
+        //create a new move
+        EveryMove everyMove = new EveryMove();
+        if (mEditMode == EDIT_MODE.PEN) {
+            everyMove.mEditMode = EDIT_MODE.PEN;
+            everyMove.mColor = mColor;
+            everyMove.mAlpha = mDrawPaint.getAlpha();
+            everyMove.mStrokeWidth = mDrawPaint.getStrokeWidth();
+            everyMove.mPath = new Path();
+            everyMove.mPath.reset();
+            everyMove.mPath.moveTo(realDownPosX, realDownPosY);
+        } else if (mEditMode == EDIT_MODE.RUBBER) {
+            everyMove.mEditMode = EDIT_MODE.RUBBER;
+            everyMove.mStrokeWidth = mRubberPaint.getStrokeWidth();
+            everyMove.mPath = new Path();
+            everyMove.mPath.reset();
+            everyMove.mPath.moveTo(realDownPosX, realDownPosY);
+        }
+        mEveryMoves.add(everyMove);
+    }
+
+    private void updateNewMove(float realMovePosX, float realMovePosY) {
+        if (mEveryMoves.size() <= 0) {
+            return;
+        }
+        EveryMove everyMove = mEveryMoves.get(mEveryMoves.size() - 1);
+        if (mEditMode == EDIT_MODE.PEN) {
+            everyMove.mPath.quadTo(mRealDownPosX, mRealDownPosY,
+                    (mRealDownPosX + realMovePosX) / 2, (mRealDownPosY + realMovePosY) / 2);
+            mRealDownPosX = realMovePosX;
+            mRealDownPosY = realMovePosY;
+        } else if (mEditMode == EDIT_MODE.RUBBER) {
+        }
+        invalidate();
+    }
+
+    public void updateNewMoveInOnDraw(Canvas canvas) {
+        if (mEveryMoves.size() <= 0) {
+            return;
+        }
+        for (int i = 0; i < mEveryMoves.size(); i++) {
+            EveryMove everyMove = mEveryMoves.get(i);
+            if (mEditMode == EDIT_MODE.PEN) {
+                canvas.drawPath(everyMove.mPath, mDrawPaint);
+            } else if (mEditMode == EDIT_MODE.RUBBER) {
+            }
+        }
+    }
+
+    private void finalDrawOnBitmap() {
+        if (mEveryMoves.size() <= 0) {
+            return;
+        }
+        EveryMove everyMove = mEveryMoves.get(mEveryMoves.size() - 1);
+        if (mEditMode == EDIT_MODE.PEN) {
+            mDrawCanvas.drawPath(everyMove.mPath, mDrawPaint);
+        } else if (mEditMode == EDIT_MODE.RUBBER) {
+        }
+        invalidate();
+    }
+
+    private float getRealPosYOnBitmap(float y) {
+        RectF displayRect = getDisplayRect();
+        return (y - displayRect.top) / mRealScaleRatio;
+    }
+
+    private float getRealPosXOnBitmap(float x) {
+        RectF displayRect = getDisplayRect();
+        return (Math.abs(displayRect.left) + x) / mRealScaleRatio;
     }
 
     private void updateRealScaleRatio() {
@@ -252,11 +369,44 @@ public class MarkableImageView extends PhotoView {
     }
 
     @Override
+    protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
+        super.onMeasure(widthMeasureSpec, heightMeasureSpec);
+        int measuredHeight = getMeasuredHeight();
+        int measuredWidth = getMeasuredWidth();
+        mMidPoint = new PointF();
+        mMidPoint.x = measuredWidth >> 1;
+        mMidPoint.y = measuredHeight >> 1;
+    }
+
+    @Override
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
-        if (mMutableBitmap != null) {
-            canvas.drawBitmap(mMutableBitmap, getImageMatrix(), null);
+        if (mIsEditing) {
+            RectF displayRect = getDisplayRect();
+            float centerX = displayRect.centerX();
+            float centerY = displayRect.centerY();
+            float deltaX = centerX - mMidPoint.x;
+            float deltaY = centerY - mMidPoint.y;
+            canvas.save();
+            canvas.scale(mRealScaleRatio, mRealScaleRatio, centerX, centerY);
+            canvas.translate(deltaX, deltaY);
+            updateNewMoveInOnDraw(canvas);
+            canvas.restore();
+        } else {
+            if (mMutableBitmap != null) {
+                canvas.drawBitmap(mMutableBitmap, getImageMatrix(), null);
+            }
         }
+    }
+
+    private List<EveryMove> mEveryMoves = new ArrayList<>();
+
+    private class EveryMove {
+        EDIT_MODE mEditMode;
+        Path mPath;
+        int mColor;
+        float mStrokeWidth;
+        float mAlpha;
     }
 
 }

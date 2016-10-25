@@ -150,7 +150,16 @@ public class EditorActivity extends AppCompatActivity
             mPenceilAndRubberView.setVisibility(View.VISIBLE);
         }
         //four mode to show
-        mNoScrollVp.setCurrentItem(index);
+        if (index == ActionsChooseView.FRAGMENT_PEN) {
+            PenceilAndRubberView.MODE mode = mPenceilAndRubberView.getMode();
+            if (mode == PenceilAndRubberView.MODE.PENCEILON) {
+                mNoScrollVp.setCurrentItem(ActionsChooseView.FRAGMENT_PEN, true);
+            } else if (mode == PenceilAndRubberView.MODE.RUBBERON) {
+                mNoScrollVp.setCurrentItem(ActionsChooseView.FRAGMENT_RUBBER, true);
+            }
+        }else{
+            mNoScrollVp.setCurrentItem(index);
+        }
         mCurrentIndex = index;
     }
 
