@@ -66,7 +66,7 @@ public class EditorActivity extends AppCompatActivity
         mMarkableView.postDelayed(new Runnable() {
             @Override
             public void run() {
-                Bitmap bitmap = BitmapFactory.decodeResource(getResources(), R.mipmap.test_pic);
+                Bitmap bitmap = BitmapFactory.decodeResource(getResources(), R.mipmap.test_pic1);
                 mMarkableView.setBitmap(bitmap);
             }
         }, 1500);

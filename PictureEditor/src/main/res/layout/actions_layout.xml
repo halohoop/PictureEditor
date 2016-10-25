@@ -22,7 +22,6 @@
         android:layout_weight="1"
         android:paddingLeft="35dp"
         android:paddingRight="35dp"
-        android:visibility="gone"
         android:src="@drawable/word_off" />
 
     <ImageView

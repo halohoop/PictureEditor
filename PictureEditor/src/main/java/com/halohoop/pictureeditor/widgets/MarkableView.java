@@ -61,16 +61,48 @@ public class MarkableView extends View {
             throw new RuntimeException("please pass in a not null and not recycled bitmap");
         }
         this.mBitmap = bitmap;
+        int bitmapWidth = this.mBitmap.getWidth();
         int bitmapHeight = this.mBitmap.getHeight();
+        if (bitmapWidth <= bitmapHeight) {//竖图和正方形图，或者是横图
+            verticalBitmapInit(bitmapWidth, bitmapHeight);
+        } else {
+            horizontalBitmapInit(bitmapWidth, bitmapHeight);
+        }
+        invalidate();
+    }
+
+    private void verticalBitmapInit(int bitmapWidth, int bitmapHeight) {
+        int measuredWidth = getMeasuredWidth();
         int measuredHeight = getMeasuredHeight();
         if (bitmapHeight >= measuredHeight) {
             mMinScaleRatio = ((float) measuredHeight) / ((float) bitmapHeight);
         } else {
-            mMinScaleRatio = bitmapHeight / measuredHeight;
+            mMinScaleRatio = ((float) bitmapHeight) / ((float) measuredHeight);
+        }
+        if (bitmapWidth >= measuredWidth) {
+            mMaxScaleRatio = ((float) measuredWidth) / ((float) bitmapWidth) * 5;
+        } else {
+            mMaxScaleRatio = bitmapWidth / measuredWidth * 5;
         }
         mScaleRatio = mMinScaleRatio;
         mMatrix.setScale(mScaleRatio, mScaleRatio);
-        invalidate();
+    }
+
+    private void horizontalBitmapInit(int bitmapWidth, int bitmapHeight) {
+        int measuredWidth = getMeasuredWidth();
+        int measuredHeight = getMeasuredHeight();
+        if (bitmapHeight >= measuredHeight) {
+            mMaxScaleRatio = ((float) measuredHeight) / ((float) bitmapHeight) * 5;
+        } else {
+            mMaxScaleRatio = ((float) bitmapHeight) / ((float) measuredHeight) * 5;
+        }
+        if (bitmapWidth >= measuredWidth) {
+            mMinScaleRatio = ((float) measuredWidth) / ((float) bitmapWidth);
+        } else {
+            mMinScaleRatio = bitmapWidth / measuredWidth;
+        }
+        mScaleRatio = mMinScaleRatio;
+        mMatrix.setScale(mScaleRatio, mScaleRatio);
     }
 
     enum MODE {
@@ -102,14 +134,15 @@ public class MarkableView extends View {
                     float moveX1 = event.getX(1);
                     float moveY1 = event.getY(1);
                     float distance = getDistance(moveX0, moveY0, moveX1, moveY1);
-                    PointF midPointF = getMidPointF(mDownX0, mDownY0, mDownX1, mDownY1);
-                    mScaleRatio = distance / mDistance;
+                    PointF midPointF = getMidPointF(moveX0, moveY0, moveX1, moveY1);
+                    mScaleRatio = distance / mDistance - 1;
                     if (mScaleRatio > mMaxScaleRatio) {
                         mScaleRatio = mMaxScaleRatio;
                     } else if (mScaleRatio < mMinScaleRatio) {
                         mScaleRatio = mMinScaleRatio;
                     }
-                    mMatrix.setScale(mScaleRatio, mScaleRatio,mMidPointF.x,mMidPointF.y);
+                    mMatrix.setScale(mScaleRatio, mScaleRatio, midPointF.x, midPointF.y);
+                    mMatrix.preTranslate(midPointF.x - mMidPointF.x, midPointF.y - mMidPointF.y);
                     invalidate();
                 } else {
 
