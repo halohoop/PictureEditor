@@ -83,7 +83,7 @@ public class EditorActivity extends AppCompatActivity
             @Override
             public void run() {
                 SystemClock.sleep(250);
-                Bitmap bitmap = BitmapFactory.decodeResource(getResources(), R.mipmap.test_pic1);
+                Bitmap bitmap = BitmapFactory.decodeResource(getResources(), R.mipmap.test_pic4);
                 Bitmap mosaicBitmap = BitmapUtils.mosaicIt(bitmap, 10);
                 mMarkableImageView.setMosaicBitmap(mosaicBitmap);
                 Message message = new Message();
@@ -209,6 +209,8 @@ public class EditorActivity extends AppCompatActivity
         mPenRubberDetailFragment.setColor(color);
         mShapeDetailFragment.setColor(color);
         mTextDetailFragment.setColor(color);
+        //set main draw view color
+        mMarkableImageView.setColor(color);
     }
 
     @Override

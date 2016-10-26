@@ -61,36 +61,40 @@ public class MarkableImageView extends PhotoView {
         initMarkableView();
     }
 
-    private void initFreePaint() {
-        mDrawPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
-        mDrawPaint.setDither(true);
-        mDrawPaint.setColor(Color.BLACK);
-        mDrawPaint.setStrokeCap(Paint.Cap.ROUND);
-        mDrawPaint.setStyle(Paint.Style.STROKE);
-        mDrawPaint.setStrokeJoin(Paint.Join.ROUND);
-        mDrawPaint.setStrokeWidth(1);
+    private Paint initDrawPaint() {
+        Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        paint.setDither(true);
+        paint.setColor(Color.BLACK);
+        paint.setStrokeCap(Paint.Cap.ROUND);
+        paint.setStyle(Paint.Style.STROKE);
+        paint.setStrokeJoin(Paint.Join.ROUND);
+        paint.setStrokeWidth(1);
+        return paint;
     }
 
-    private void initRubberPaint() {
-        mRubberPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
-        mRubberPaint.setDither(true);
-        mRubberPaint.setStyle(Paint.Style.STROKE);
-        mRubberPaint.setStrokeCap(Paint.Cap.ROUND);
-        mRubberPaint.setStrokeJoin(Paint.Join.ROUND);
-        mRubberPaint.setStrokeWidth(25);
+    private Paint initRubberPaint() {
+        Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        paint.setDither(true);
+        paint.setStyle(Paint.Style.STROKE);
+        paint.setStrokeCap(Paint.Cap.ROUND);
+        paint.setStrokeJoin(Paint.Join.ROUND);
+        paint.setStrokeWidth(25);
+        return paint;
     }
 
-    private void initMosaicPaint() {
-        mMosaicPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
-        mMosaicPaint.setDither(true);
-        mMosaicPaint.setStyle(Paint.Style.STROKE);
-        mMosaicPaint.setStrokeCap(Paint.Cap.ROUND);
-        mMosaicPaint.setStrokeJoin(Paint.Join.ROUND);
-        mMosaicPaint.setStrokeWidth(25);
+    private Paint initMosaicPaint() {
+        Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        paint.setDither(true);
+        paint.setStyle(Paint.Style.STROKE);
+        paint.setStrokeCap(Paint.Cap.ROUND);
+        paint.setStrokeJoin(Paint.Join.ROUND);
+        paint.setStrokeWidth(25);
+        return paint;
     }
 
     public void setDefaultState() {
         mColor = parseColor("#FF2968");
+        mDrawPaint.setColor(mColor);
     }
 
     private int parseColor(String colorHex) {
@@ -119,9 +123,9 @@ public class MarkableImageView extends PhotoView {
 
 
     private void initMarkableView() {
-        initFreePaint();
-        initMosaicPaint();
-        initRubberPaint();
+        mDrawPaint = initDrawPaint();
+        mMosaicPaint = initMosaicPaint();
+        mRubberPaint = initRubberPaint();
         setDefaultState();
     }
 
@@ -163,9 +167,11 @@ public class MarkableImageView extends PhotoView {
                 //横图
                 mRealScaleRatio = ((float) getMeasuredWidth()) / ((float) this.mMainBitmap
                         .getWidth());
+                mFirstScale = mRealScaleRatio;
             } else {//竖图
                 mRealScaleRatio = ((float) getMeasuredHeight()) / ((float) this.mMainBitmap
                         .getHeight());
+                mFirstScale = mRealScaleRatio;
             }
         }
     }
@@ -206,6 +212,14 @@ public class MarkableImageView extends PhotoView {
 
     public EDIT_MODE getEditMode() {
         return this.mEditMode;
+    }
+
+    public void setColor(int color) {
+        this.mColor = color;
+    }
+
+    public int getColor() {
+        return mColor;
     }
 
     @Override
@@ -310,6 +324,9 @@ public class MarkableImageView extends PhotoView {
         for (int i = 0; i < mEveryMoves.size(); i++) {
             EveryMove everyMove = mEveryMoves.get(i);
             if (mEditMode == EDIT_MODE.PEN) {
+                mDrawPaint.setColor(everyMove.mColor);
+                mDrawPaint.setStrokeWidth(everyMove.mStrokeWidth);
+                mDrawPaint.setAlpha(everyMove.mAlpha);
                 canvas.drawPath(everyMove.mPath, mDrawPaint);
             } else if (mEditMode == EDIT_MODE.RUBBER) {
             }
@@ -322,6 +339,9 @@ public class MarkableImageView extends PhotoView {
         }
         EveryMove everyMove = mEveryMoves.get(mEveryMoves.size() - 1);
         if (mEditMode == EDIT_MODE.PEN) {
+            mDrawPaint.setStrokeWidth(everyMove.mStrokeWidth);
+            mDrawPaint.setColor(everyMove.mColor);
+            mDrawPaint.setAlpha(everyMove.mAlpha);
             mDrawCanvas.drawPath(everyMove.mPath, mDrawPaint);
         } else if (mEditMode == EDIT_MODE.RUBBER) {
         }
@@ -382,14 +402,8 @@ public class MarkableImageView extends PhotoView {
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
         if (mIsEditing) {
-            RectF displayRect = getDisplayRect();
-            float centerX = displayRect.centerX();
-            float centerY = displayRect.centerY();
-            float deltaX = centerX - mMidPoint.x;
-            float deltaY = centerY - mMidPoint.y;
             canvas.save();
-            canvas.scale(mRealScaleRatio, mRealScaleRatio, centerX, centerY);
-            canvas.translate(deltaX, deltaY);
+            canvas.setMatrix(getImageMatrix());
             updateNewMoveInOnDraw(canvas);
             canvas.restore();
         } else {
@@ -406,7 +420,7 @@ public class MarkableImageView extends PhotoView {
         Path mPath;
         int mColor;
         float mStrokeWidth;
-        float mAlpha;
+        int mAlpha;
     }
 
 }
