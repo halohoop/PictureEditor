@@ -11,8 +11,8 @@
         android:layout_width="0dp"
         android:layout_height="match_parent"
         android:layout_weight="1"
-        android:paddingLeft="35dp"
-        android:paddingRight="35dp"
+        android:paddingLeft="45dp"
+        android:paddingRight="45dp"
         android:src="@drawable/pen_on" />
 
     <ImageView
@@ -20,8 +20,9 @@
         android:layout_width="0dp"
         android:layout_height="match_parent"
         android:layout_weight="1"
-        android:paddingLeft="35dp"
-        android:paddingRight="35dp"
+        android:paddingLeft="45dp"
+        android:paddingRight="45dp"
+        android:visibility="gone"
         android:src="@drawable/word_off" />
 
     <ImageView
@@ -29,8 +30,8 @@
         android:layout_width="0dp"
         android:layout_height="match_parent"
         android:layout_weight="1"
-        android:paddingLeft="35dp"
-        android:paddingRight="35dp"
+        android:paddingLeft="45dp"
+        android:paddingRight="45dp"
         android:src="@drawable/shape_off" />
 
     <ImageView
@@ -38,7 +39,7 @@
         android:layout_width="0dp"
         android:layout_height="match_parent"
         android:layout_weight="1"
-        android:paddingLeft="35dp"
-        android:paddingRight="35dp"
+        android:paddingLeft="45dp"
+        android:paddingRight="45dp"
         android:src="@drawable/mosaic_off" />
 </LinearLayout>

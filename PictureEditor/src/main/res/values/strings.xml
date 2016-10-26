@@ -4,4 +4,8 @@
     <string name="editor_dialog_exist">"退出"</string>
     <string name="editor_dialog_cancel">"取消"</string>
     <string name="screenshot_delete_action">"删除"</string>
+    <string name="screenshot_delete_confirmation">屏幕截图已删除。</string>
+    <string name="screenshot_saving_ticker" msgid="7403652894056693515">"正在保存屏幕截图..."</string>
+    <string name="screenshot_saving_title" msgid="8242282144535555697">"正在保存屏幕截图..."</string>
+    <string name="screenshot_saving_text" msgid="2419718443411738818">"正在保存屏幕截图。"</string>
 </resources>

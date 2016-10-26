@@ -23,6 +23,7 @@ import android.support.v4.view.ViewPager;
 import android.support.v7.app.AppCompatActivity;
 import android.view.View;
 import android.widget.SeekBar;
+import android.widget.Toast;
 
 import com.halohoop.pictureeditor.controllers.ToolDetailsPagerAdapter;
 import com.halohoop.pictureeditor.pieces.ColorPickerDetailFragment;
@@ -52,7 +53,7 @@ public class EditorActivity extends AppCompatActivity
         ColorPickerView.ColorPickListener,
         ShapesChooseView.OnSelectedListener,
         PenceilAndRubberView.PenceilOrRubberModeCallBack,
-        DialogInterface.OnClickListener {
+        DialogInterface.OnClickListener, MarkableImageView.OnSaveCompleteListener {
 
     private ActionsChooseView mActionsChooseView;
     private ViewPager mNoScrollVp;
@@ -81,6 +82,7 @@ public class EditorActivity extends AppCompatActivity
         mPenceilAndRubberView.setPenceilOrRubberModeCallBack(this);
         mMarkableImageView = (MarkableImageView) findViewById(R.id.markableview);
         mMarkableImageView.setMaximumScale(6);
+        mMarkableImageView.setOnSaveCompleteListener(this);
         mNoScrollVp.setOffscreenPageLimit(7);//important
         mActionsChooseView = (ActionsChooseView) findViewById(R.id.actions_choose_view);
         mActionsChooseView.setOnSelectedListener(this);
@@ -88,6 +90,7 @@ public class EditorActivity extends AppCompatActivity
         mIFragments = createFragments();
         mNoScrollVp.setAdapter(new ToolDetailsPagerAdapter(getSupportFragmentManager(),
                 mIFragments));
+        mNoScrollVp.setCurrentItem(ActionsChooseView.FRAGMENT_PEN, true);
         new Thread(new Runnable() {
             @Override
             public void run() {
@@ -118,18 +121,24 @@ public class EditorActivity extends AppCompatActivity
     };
 
     @Override
+    protected void onStart() {
+        super.onStart();
+    }
+
+    @Override
     public void onWindowFocusChanged(boolean hasFocus) {
         super.onWindowFocusChanged(hasFocus);
-        mPenRubberDetailFragment.setOnSeekBarChangeListenerOnAlphaSeekBar(this);
-        mPenRubberDetailFragment.setOnSeekBarChangeListenerOnThicknessSeekBar(this);
-        mPenRubberDetailFragment.setOnClickListener(this);
-        mTextDetailFragment.setOnClickListener(this);
-        mShapeDetailFragment.setOnClickListener(this);
-        mShapeDetailFragment.setListener(this);
-        mMosaicDetailFragment.setOnSeekBarChangeListenerOnThicknessSeekBar(this);
-        mRubberDetailFragment.setOnSeekBarChangeListenerOnThicknessSeekBar(this);
-        mColorPickerDetailFragment.setColorPickListener(this);
-        mNoScrollVp.setCurrentItem(ActionsChooseView.FRAGMENT_PEN, true);
+        if (hasFocus) {
+            mPenRubberDetailFragment.setOnSeekBarChangeListenerOnAlphaSeekBar(this);
+            mPenRubberDetailFragment.setOnSeekBarChangeListenerOnThicknessSeekBar(this);
+            mPenRubberDetailFragment.setOnClickListener(this);
+            mTextDetailFragment.setOnClickListener(this);
+            mShapeDetailFragment.setOnClickListener(this);
+            mShapeDetailFragment.setListener(this);
+            mMosaicDetailFragment.setOnSeekBarChangeListenerOnThicknessSeekBar(this);
+            mRubberDetailFragment.setOnSeekBarChangeListenerOnThicknessSeekBar(this);
+            mColorPickerDetailFragment.setColorPickListener(this);
+        }
     }
 
     private List<IFragment> createFragments() {
@@ -220,12 +229,13 @@ public class EditorActivity extends AppCompatActivity
             mNoScrollVp.setCurrentItem(ActionsChooseView.FRAGMENT_COLOR_PICKER, true);
         } else if (v.getId() == R.id.iv_add_text) {
         } else if (v.getId() == R.id.iv_cancel) {
-            if(mMarkableImageView.isEdited()){
+            if (mMarkableImageView.isEdited()) {
                 alertDialog();
-            }else{
+            } else {
                 finish();
             }
         } else if (v.getId() == R.id.iv_save) {
+            mMarkableImageView.save();
         } else if (v.getId() == R.id.iv_stepbackward) {
         } else if (v.getId() == R.id.iv_stepforward) {
         }
@@ -291,5 +301,10 @@ public class EditorActivity extends AppCompatActivity
     protected void onDestroy() {
         super.onDestroy();
         mMarkableImageView.destroyEveryThing();
+    }
+
+    @Override
+    public void onComplete(String path,String fileName) {
+        //Notification
     }
 }
