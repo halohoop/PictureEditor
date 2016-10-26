@@ -21,6 +21,7 @@ import android.graphics.Paint;
 import android.graphics.Path;
 import android.graphics.PointF;
 import android.graphics.RectF;
+import android.graphics.Region;
 import android.graphics.Shader;
 import android.util.AttributeSet;
 import android.view.MotionEvent;
@@ -38,14 +39,20 @@ public class MarkableImageView extends PhotoView {
     private float mDownX;
     private float mDownY;
     private Paint mDrawPaint;
+    private float mDrawPaintStrokeWidth = 1;
     private Paint mMosaicPaint;
+    private float mMosaicPaintStrokeWidth = 25;
     private Paint mRubberPaint;
+    private float mRubberPaintStrokeWidth = 25;
     private Bitmap mMutableBitmap;
+    private Bitmap mMutableBitmap1;
+    private Bitmap mMutableBitmap2;
     private Canvas mDrawCanvas;
     private float mRealScaleRatio = 1;
     private float mRealDownPosX;
     private float mRealDownPosY;
     private int mColor;
+    private int mAlpha;
     private PointF mMidPoint;
 
     public MarkableImageView(Context context) {
@@ -94,7 +101,16 @@ public class MarkableImageView extends PhotoView {
 
     public void setDefaultState() {
         mColor = parseColor("#FF2968");
+        mAlpha = 255;
         mDrawPaint.setColor(mColor);
+    }
+
+    private void resetAllPaintToMatchOutside() {
+        mDrawPaint.setColor(mColor);
+        mDrawPaint.setAlpha(mAlpha);
+        mDrawPaint.setStrokeWidth(mDrawPaintStrokeWidth);
+        mRubberPaint.setStrokeWidth(mRubberPaintStrokeWidth);
+        mMosaicPaint.setStrokeWidth(mMosaicPaintStrokeWidth);
     }
 
     private int parseColor(String colorHex) {
@@ -106,26 +122,30 @@ public class MarkableImageView extends PhotoView {
     }
 
     public void updateDrawPaintStrokeWidth(float strokeWidth) {
+        this.mDrawPaintStrokeWidth = strokeWidth;
         mDrawPaint.setStrokeWidth(strokeWidth);
     }
 
     public void updateDrawPaintAlpha(int alpha) {
+        this.mAlpha = alpha;
         mDrawPaint.setAlpha(alpha);
     }
 
     public void updateRubberPaintStrokeWidth(float strokeWidth) {
+        this.mRubberPaintStrokeWidth = strokeWidth;
         mRubberPaint.setStrokeWidth(strokeWidth);
     }
 
     public void updateMosaicPaintStrokeWidth(float strokeWidth) {
+        this.mMosaicPaintStrokeWidth = strokeWidth;
         mMosaicPaint.setStrokeWidth(strokeWidth);
     }
 
 
     private void initMarkableView() {
         mDrawPaint = initDrawPaint();
-        mMosaicPaint = initMosaicPaint();
         mRubberPaint = initRubberPaint();
+        mMosaicPaint = initMosaicPaint();
         setDefaultState();
     }
 
@@ -133,13 +153,41 @@ public class MarkableImageView extends PhotoView {
     public void setImageBitmap(Bitmap bm) {
         super.setImageBitmap(bm);
         this.mMainBitmap = bm;
-        mMutableBitmap = Bitmap.createBitmap(bm.getWidth(), bm.getHeight(), Bitmap.Config
+        mMutableBitmap1 = Bitmap.createBitmap(bm.getWidth(), bm.getHeight(), Bitmap.Config
                 .ARGB_8888);
+        mMutableBitmap2 = Bitmap.createBitmap(bm.getWidth(), bm.getHeight(), Bitmap.Config
+                .ARGB_8888);
+        mMutableBitmap = mMutableBitmap1;
         mDrawCanvas = new Canvas(mMutableBitmap);
         BitmapShader rubberShader = new BitmapShader(bm, Shader.TileMode.REPEAT, Shader.TileMode
                 .REPEAT);
         mRubberPaint.setShader(rubberShader);
         getRealScaleRatio();
+    }
+
+    public boolean isEdited() {
+        return mEveryMoves.size() > 0;
+    }
+
+    //是否正在保存当中
+    private boolean mIsSaving = false;
+
+    /**
+     * called by EditorActivity(Main Thread) or itself(new Thread)
+     */
+    public synchronized void destroyEveryThing() {
+        if (!mIsSaving) {
+            if (!mMutableBitmap1.isRecycled()) {
+                mMutableBitmap1.recycle();
+                mMutableBitmap1 = null;
+            }
+            if (!mMutableBitmap2.isRecycled()) {
+                mMutableBitmap2.recycle();
+                mMutableBitmap2 = null;
+            }
+            mEveryMoves.clear();
+            mEveryMoves = null;
+        }
     }
 
     enum VERTICAL_HORIZONTAL {
@@ -217,7 +265,6 @@ public class MarkableImageView extends PhotoView {
     public void setEditMode(EDIT_MODE editMode) {
         this.mEditMode = editMode;
     }
-
 
     public EDIT_MODE getEditMode() {
         return this.mEditMode;
@@ -307,6 +354,12 @@ public class MarkableImageView extends PhotoView {
             everyMove.mPath = new Path();
             everyMove.mPath.reset();
             everyMove.mPath.moveTo(realDownPosX, realDownPosY);
+        } else if (mEditMode == EDIT_MODE.MOSAIC) {
+            everyMove.mEditMode = EDIT_MODE.MOSAIC;
+            everyMove.mStrokeWidth = mMosaicPaint.getStrokeWidth();
+            everyMove.mPath = new Path();
+            everyMove.mPath.reset();
+            everyMove.mPath.moveTo(realDownPosX, realDownPosY);
         }
         mEveryMoves.add(everyMove);
     }
@@ -322,24 +375,39 @@ public class MarkableImageView extends PhotoView {
             mRealDownPosX = realMovePosX;
             mRealDownPosY = realMovePosY;
         } else if (mEditMode == EDIT_MODE.RUBBER) {
+            everyMove.mPath.quadTo(mRealDownPosX, mRealDownPosY,
+                    (mRealDownPosX + realMovePosX) / 2, (mRealDownPosY + realMovePosY) / 2);
+            mRealDownPosX = realMovePosX;
+            mRealDownPosY = realMovePosY;
+        } else if (mEditMode == EDIT_MODE.MOSAIC) {
+            everyMove.mPath.quadTo(mRealDownPosX, mRealDownPosY,
+                    (mRealDownPosX + realMovePosX) / 2, (mRealDownPosY + realMovePosY) / 2);
+            mRealDownPosX = realMovePosX;
+            mRealDownPosY = realMovePosY;
         }
         invalidate();
     }
 
-    public void updateNewMoveInOnDraw(Canvas canvas) {
+    public void updateNewMoveInOnDraw(Canvas ondrawCanvas) {
         if (mEveryMoves.size() <= 0) {
             return;
         }
         for (int i = 0; i < mEveryMoves.size(); i++) {
             EveryMove everyMove = mEveryMoves.get(i);
-            if (mEditMode == EDIT_MODE.PEN) {
+            if (everyMove.mEditMode == EDIT_MODE.PEN) {
                 mDrawPaint.setColor(everyMove.mColor);
                 mDrawPaint.setStrokeWidth(everyMove.mStrokeWidth);
                 mDrawPaint.setAlpha(everyMove.mAlpha);
-                canvas.drawPath(everyMove.mPath, mDrawPaint);
-            } else if (mEditMode == EDIT_MODE.RUBBER) {
+                ondrawCanvas.drawPath(everyMove.mPath, mDrawPaint);
+            } else if (everyMove.mEditMode == EDIT_MODE.RUBBER) {
+                mRubberPaint.setStrokeWidth(everyMove.mStrokeWidth);
+                ondrawCanvas.drawPath(everyMove.mPath, mRubberPaint);
+            } else if (everyMove.mEditMode == EDIT_MODE.MOSAIC) {
+                mMosaicPaint.setStrokeWidth(everyMove.mStrokeWidth);
+                ondrawCanvas.drawPath(everyMove.mPath, mMosaicPaint);
             }
         }
+        resetAllPaintToMatchOutside();
     }
 
     private void finalDrawOnBitmap() {
@@ -347,13 +415,19 @@ public class MarkableImageView extends PhotoView {
             return;
         }
         EveryMove everyMove = mEveryMoves.get(mEveryMoves.size() - 1);
-        if (mEditMode == EDIT_MODE.PEN) {
+        if (everyMove.mEditMode == EDIT_MODE.PEN) {
             mDrawPaint.setStrokeWidth(everyMove.mStrokeWidth);
             mDrawPaint.setColor(everyMove.mColor);
             mDrawPaint.setAlpha(everyMove.mAlpha);
             mDrawCanvas.drawPath(everyMove.mPath, mDrawPaint);
-        } else if (mEditMode == EDIT_MODE.RUBBER) {
+        } else if (everyMove.mEditMode == EDIT_MODE.RUBBER) {
+            mRubberPaint.setStrokeWidth(everyMove.mStrokeWidth);
+            mDrawCanvas.drawPath(everyMove.mPath, mRubberPaint);
+        } else if (everyMove.mEditMode == EDIT_MODE.MOSAIC) {
+            mMosaicPaint.setStrokeWidth(everyMove.mStrokeWidth);
+            mDrawCanvas.drawPath(everyMove.mPath, mMosaicPaint);
         }
+        resetAllPaintToMatchOutside();
         invalidate();
     }
 
@@ -419,9 +493,14 @@ public class MarkableImageView extends PhotoView {
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
         if (mIsEditing) {
+            RectF displayRect = getDisplayRect();
+            canvas.clipRect(displayRect);
+            canvas.clipRect(displayRect, Region.Op.INTERSECT);//get two rects intersect parts
             canvas.save();
             canvas.setMatrix(getImageMatrix());
+            canvas.translate(0, 60/*dp*/ * 2 / mRealScaleRatio);
             updateNewMoveInOnDraw(canvas);
+            LogUtils.i("rubber debug");
             canvas.restore();
         } else {
             if (mMutableBitmap != null) {

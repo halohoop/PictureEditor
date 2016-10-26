@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+              android:layout_width="match_parent"
+              android:layout_height="match_parent"
+              android:background="#ffffff"
+              android:orientation="vertical">
+
+    <TextView
+        android:layout_weight="1"
+        android:id="@+id/tv_alert_dialog_message"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:gravity="left|center_vertical"
+        android:padding="20dp"
+        android:text="@string/edited_exist_or_not"
+        android:textColor="#000"/>
+
+    <FrameLayout
+        android:layout_weight="1"
+        android:layout_width="match_parent"
+        android:layout_height="0dp">
+
+        <TextView
+            android:id="@+id/tv_positive"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:layout_gravity="center"
+            android:padding="20dp"
+            android:gravity="center"
+            android:text="@string/editor_dialog_exist"
+            android:textColor="#20A397"/>
+
+        <TextView
+            android:id="@+id/tv_negetive"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:gravity="center"
+            android:layout_gravity="right|center_vertical"
+            android:padding="20dp"
+            android:text="@string/editor_dialog_cancel"
+            android:textColor="#20A397"/>
+    </FrameLayout>
+
+
+</LinearLayout>

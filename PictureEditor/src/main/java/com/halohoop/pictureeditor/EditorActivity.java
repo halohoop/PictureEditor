@@ -12,6 +12,7 @@
 
 package com.halohoop.pictureeditor;
 
+import android.content.DialogInterface;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.Bundle;
@@ -30,6 +31,7 @@ import com.halohoop.pictureeditor.pieces.MosaicDetailFragment;
 import com.halohoop.pictureeditor.pieces.PenRubberDetailFragment;
 import com.halohoop.pictureeditor.pieces.RubberDetailFragment;
 import com.halohoop.pictureeditor.pieces.ShapeDetailFragment;
+import com.halohoop.pictureeditor.pieces.SimpleCustomDialog;
 import com.halohoop.pictureeditor.pieces.TextDetailFragment;
 import com.halohoop.pictureeditor.utils.BitmapUtils;
 import com.halohoop.pictureeditor.utils.LogUtils;
@@ -47,7 +49,9 @@ public class EditorActivity extends AppCompatActivity
         SeekBar.OnSeekBarChangeListener,
         View.OnClickListener,
         ColorPickerView.ColorPickListener,
-        ShapesChooseView.OnSelectedListener, PenceilAndRubberView.PenceilOrRubberModeCallBack {
+        ShapesChooseView.OnSelectedListener,
+        PenceilAndRubberView.PenceilOrRubberModeCallBack,
+        DialogInterface.OnClickListener {
 
     private ActionsChooseView mActionsChooseView;
     private ViewPager mNoScrollVp;
@@ -67,6 +71,10 @@ public class EditorActivity extends AppCompatActivity
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_edit);
         mProgressContainer = findViewById(R.id.progress_container);
+        findViewById(R.id.iv_cancel).setOnClickListener(this);
+        findViewById(R.id.iv_save).setOnClickListener(this);
+        findViewById(R.id.iv_stepbackward).setOnClickListener(this);
+        findViewById(R.id.iv_stepforward).setOnClickListener(this);
         mNoScrollVp = (ViewPager) findViewById(R.id.no_scroll_vp);
         mPenceilAndRubberView = (PenceilAndRubberView) findViewById(R.id.penceil_and_rubber_view);
         mPenceilAndRubberView.setPenceilOrRubberModeCallBack(this);
@@ -84,8 +92,10 @@ public class EditorActivity extends AppCompatActivity
             public void run() {
                 SystemClock.sleep(250);
                 Bitmap bitmap = BitmapFactory.decodeResource(getResources(), R.mipmap.test_pic4);
-                Bitmap mosaicBitmap = BitmapUtils.mosaicIt(bitmap, 10);
-                mMarkableImageView.setMosaicBitmap(mosaicBitmap);
+//                Bitmap mosaicBitmap = BitmapUtils.mosaicIt(bitmap, 10);
+                Bitmap mosaicRect = BitmapFactory.decodeResource(getResources(), R.mipmap
+                        .mosaic_rect);
+                mMarkableImageView.setMosaicBitmap(mosaicRect);
                 Message message = new Message();
                 message.obj = bitmap;
                 message.what = MOSAIC_BITMAP_DONE;
@@ -153,12 +163,17 @@ public class EditorActivity extends AppCompatActivity
         if (index == ActionsChooseView.FRAGMENT_PEN) {
             PenceilAndRubberView.MODE mode = mPenceilAndRubberView.getMode();
             if (mode == PenceilAndRubberView.MODE.PENCEILON) {
+                mMarkableImageView.setEditMode(MarkableImageView.EDIT_MODE.PEN);
                 mNoScrollVp.setCurrentItem(ActionsChooseView.FRAGMENT_PEN, true);
             } else if (mode == PenceilAndRubberView.MODE.RUBBERON) {
+                mMarkableImageView.setEditMode(MarkableImageView.EDIT_MODE.RUBBER);
                 mNoScrollVp.setCurrentItem(ActionsChooseView.FRAGMENT_RUBBER, true);
             }
-        }else{
+        } else {
             mNoScrollVp.setCurrentItem(index);
+        }
+        if (index == ActionsChooseView.FRAGMENT_MOSAIC) {
+            mMarkableImageView.setEditMode(MarkableImageView.EDIT_MODE.MOSAIC);
         }
         mCurrentIndex = index;
     }
@@ -200,7 +215,15 @@ public class EditorActivity extends AppCompatActivity
                 || v.getId() == R.id.color_show_view_in_text_detail_container) {
             mNoScrollVp.setCurrentItem(ActionsChooseView.FRAGMENT_COLOR_PICKER, true);
         } else if (v.getId() == R.id.iv_add_text) {
-            //text add click
+        } else if (v.getId() == R.id.iv_cancel) {
+            if(mMarkableImageView.isEdited()){
+                alertDialog();
+            }else{
+                finish();
+            }
+        } else if (v.getId() == R.id.iv_save) {
+        } else if (v.getId() == R.id.iv_stepbackward) {
+        } else if (v.getId() == R.id.iv_stepforward) {
         }
     }
 
@@ -227,8 +250,32 @@ public class EditorActivity extends AppCompatActivity
     public void onModeSelected(PenceilAndRubberView.MODE mode) {
         if (mode == PenceilAndRubberView.MODE.PENCEILON) {
             mNoScrollVp.setCurrentItem(ActionsChooseView.FRAGMENT_PEN, true);
+            mMarkableImageView.setEditMode(MarkableImageView.EDIT_MODE.PEN);
         } else if (mode == PenceilAndRubberView.MODE.RUBBERON) {
             mNoScrollVp.setCurrentItem(ActionsChooseView.FRAGMENT_RUBBER, true);
+            mMarkableImageView.setEditMode(MarkableImageView.EDIT_MODE.RUBBER);
         }
+    }
+
+    private void alertDialog() {
+        SimpleCustomDialog.Builder dialog = new SimpleCustomDialog.Builder(this);
+        dialog.setNegativeButtonClickListener(this)
+                .setPositiveButtonClickListener(this)
+                .create().show();
+    }
+
+    @Override
+    public void onClick(DialogInterface dialog, int which) {
+        if (which == DialogInterface.BUTTON_POSITIVE) {
+            finish();
+        } else if (which == DialogInterface.BUTTON_NEGATIVE) {
+            //eat it
+        }
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        mMarkableImageView.destroyEveryThing();
     }
 }

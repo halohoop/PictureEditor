@@ -13,9 +13,17 @@
 package com.halohoop.pictureeditor.utils;
 
 import android.graphics.Bitmap;
+import android.graphics.Color;
 import android.graphics.Rect;
 
 public class BitmapUtils {
+    /**
+     * 将整张图片马赛克
+     *
+     * @param old
+     * @param blockSize
+     * @return
+     */
     public static Bitmap mosaicIt(Bitmap old, int blockSize) {
         if (old == null || old.isRecycled()) {
             return null;
@@ -77,5 +85,25 @@ public class BitmapUtils {
                 pxs[p + x - 1] = sampleColor;
             }
         }
+    }
+
+    /**
+     * 获取某一点的颜色
+     * @param bitmap
+     * @param x
+     * @param y
+     * @return
+     */
+    public static int getCertainPointColor(Bitmap bitmap, int x, int y) {
+        if (bitmap != null || bitmap.isRecycled()) {
+            return Color.GRAY;
+        }
+        int pixel = bitmap.getPixel(x, y);
+        //获取颜色
+        int alphaValue = Color.alpha(pixel);
+        int redValue = Color.red(pixel);
+        int blueValue = Color.blue(pixel);
+        int greenValue = Color.green(pixel);
+        return Color.argb(alphaValue, redValue, greenValue, blueValue);
     }
 }

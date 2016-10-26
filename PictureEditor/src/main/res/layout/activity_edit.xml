@@ -8,6 +8,61 @@
                 tools:context="com.halohoop.pictureeditor.EditorActivity">
 
     <com.halohoop.pictureeditor.widgets.ClickToSpreadView
+        android:id="@+id/click_to_spread_operate"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentTop="true"
+        app:animation_duration="200"
+        app:end_radius="200"
+        app:start_stroke_width="30"
+        app:stroke_color="#33e8e8e8">
+
+        <RelativeLayout
+            android:id="@+id/operation_container"
+            android:layout_width="match_parent"
+            android:layout_height="60dp"
+            android:background="#1C1C1C">
+
+            <ImageView
+                android:id="@+id/iv_cancel"
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:layout_alignParentLeft="true"
+                android:paddingLeft="20dp"
+                android:paddingRight="20dp"
+                android:src="@drawable/cancel"/>
+
+            <ImageView
+                android:id="@+id/iv_save"
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:layout_alignParentRight="true"
+                android:paddingLeft="20dp"
+                android:paddingRight="20dp"
+                android:src="@drawable/save"/>
+
+            <ImageView
+                android:id="@+id/iv_stepforward"
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:layout_toLeftOf="@id/iv_save"
+                android:paddingLeft="20dp"
+                android:paddingRight="20dp"
+                android:src="@drawable/stepforward"/>
+
+            <ImageView
+                android:id="@+id/iv_stepbackward"
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:layout_toLeftOf="@id/iv_stepforward"
+                android:paddingLeft="20dp"
+                android:paddingRight="20dp"
+                android:src="@drawable/stepback"/>
+
+        </RelativeLayout>
+    </com.halohoop.pictureeditor.widgets.ClickToSpreadView>
+
+    <com.halohoop.pictureeditor.widgets.ClickToSpreadView
         android:id="@+id/click_to_spread"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -34,7 +89,8 @@
         android:id="@+id/markableview"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_above="@id/no_scroll_vp"/>
+        android:layout_above="@id/no_scroll_vp"
+        android:layout_below="@id/click_to_spread_operate"/>
 
     <com.halohoop.pictureeditor.widgets.PenceilAndRubberView
         android:id="@+id/penceil_and_rubber_view"
@@ -52,7 +108,8 @@
         android:id="@+id/progress_container"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:background="#338e8e8e">
+        android:background="#338e8e8e"
+        android:visibility="gone">
 
         <ProgressBar
             android:layout_width="50dp"
