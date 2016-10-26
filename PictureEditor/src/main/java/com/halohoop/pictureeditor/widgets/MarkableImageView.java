@@ -446,24 +446,23 @@ public class MarkableImageView extends PhotoView {
         }
         EveryMove everyMove = mEveryMoves.get(mEveryMoves.size() - 1);
         if (everyMove.mEditMode == EDIT_MODE.PEN) {
-            everyMove.mPath.quadTo(mRealDownPosX, mRealDownPosY,
-                    (mRealDownPosX + realMovePosX) / 2, (mRealDownPosY + realMovePosY) / 2);
-            mRealDownPosX = realMovePosX;
-            mRealDownPosY = realMovePosY;
+            handleActionMovePenRubberAndMosaic(realMovePosX, realMovePosY, everyMove);
         } else if (everyMove.mEditMode == EDIT_MODE.RUBBER) {
-            everyMove.mPath.quadTo(mRealDownPosX, mRealDownPosY,
-                    (mRealDownPosX + realMovePosX) / 2, (mRealDownPosY + realMovePosY) / 2);
-            mRealDownPosX = realMovePosX;
-            mRealDownPosY = realMovePosY;
+            handleActionMovePenRubberAndMosaic(realMovePosX, realMovePosY, everyMove);
         } else if (everyMove.mEditMode == EDIT_MODE.MOSAIC) {
-            everyMove.mPath.quadTo(mRealDownPosX, mRealDownPosY,
-                    (mRealDownPosX + realMovePosX) / 2, (mRealDownPosY + realMovePosY) / 2);
-            mRealDownPosX = realMovePosX;
-            mRealDownPosY = realMovePosY;
+            handleActionMovePenRubberAndMosaic(realMovePosX, realMovePosY, everyMove);
         } else if (everyMove.mEditMode == EDIT_MODE.SHAPE) {
             updateShapeState(realMovePosX, realMovePosY);
         }
         invalidate();
+    }
+
+    private void handleActionMovePenRubberAndMosaic(float realMovePosX, float realMovePosY,
+                                                    EveryMove everyMove) {
+        everyMove.mPath.quadTo(mRealDownPosX, mRealDownPosY,
+                (mRealDownPosX + realMovePosX) / 2, (mRealDownPosY + realMovePosY) / 2);
+        mRealDownPosX = realMovePosX;
+        mRealDownPosY = realMovePosY;
     }
 
     private void updateShapeState(float realMovePosX, float realMovePosY) {
@@ -474,20 +473,157 @@ public class MarkableImageView extends PhotoView {
                 circlePointFs[1].x = realMovePosX;
                 circlePointFs[1].y = realMovePosY;
                 break;
-//            case ARROW:
-//                // angle of the arrow
-//                updateAngle();
-//                updateTrianglePointFs();
-//                break;
-//            case RECT:
-//                updateRectanglePointFs();
-//                break;
-//            case CIRCLE:
-//                updateCirclePointFsAndRadius();
-//                break;
-//            case ROUNDRECT:
-//                updateRectanglePointFs();
-//                break;
+            case ARROW:
+                updateDistanceXYAndAngle(realMovePosX, realMovePosY);
+                updateTrianglePointFs(shape, realMovePosX, realMovePosY);
+                break;
+            case RECT:
+                updateDistanceXY(realMovePosX, realMovePosY);
+                updateRectanglePointFs(shape, realMovePosX, realMovePosY);
+                break;
+            case CIRCLE:
+                updateDistanceXY(realMovePosX, realMovePosY);
+                updateCirclePointFsAndRadius(shape, realMovePosX, realMovePosY);
+                break;
+            case ROUNDRECT:
+                updateDistanceXY(realMovePosX, realMovePosY);
+                updateRectanglePointFs(shape, realMovePosX, realMovePosY);
+                break;
+        }
+    }
+
+    private void updateCirclePointFsAndRadius(Shape shape, float realMovePosX, float realMovePosY) {
+        PointF[] circlePointFs = shape.getPoints();
+        circlePointFs[1].x = realMovePosX;
+        circlePointFs[1].y = realMovePosY;
+        float radius = (float) Math.sqrt(mDisX * mDisX + mDisY * mDisY);
+        shape.setRadius(radius);
+    }
+
+    private void updateRectanglePointFs(Shape shape, float realMovePosX, float realMovePosY) {
+        PointF[] rectanglePointFs = shape.getPoints();
+        //----------------------
+        //left top to right bottom
+        if (mRealDownPosX <= realMovePosX && mRealDownPosY <= realMovePosY) {
+            rectanglePointFs[1].x = rectanglePointFs[0].x;
+            rectanglePointFs[1].y = rectanglePointFs[0].y + Math.abs(mDisY);
+            rectanglePointFs[2].x = realMovePosX;
+            rectanglePointFs[2].y = realMovePosY;
+            rectanglePointFs[3].x = realMovePosX;
+            rectanglePointFs[3].y = realMovePosY - Math.abs(mDisY);
+        }
+        //right bottom to left top
+        else if (mRealDownPosX >= realMovePosX && mRealDownPosY >= realMovePosY) {
+            rectanglePointFs[1].x = rectanglePointFs[0].x;
+            rectanglePointFs[1].y = rectanglePointFs[0].y - Math.abs(mDisY);
+            rectanglePointFs[2].x = realMovePosX;
+            rectanglePointFs[2].y = realMovePosY;
+            rectanglePointFs[3].x = realMovePosX;
+            rectanglePointFs[3].y = realMovePosY + Math.abs(mDisY);
+        }
+        //left bottom to right top
+        else if (mRealDownPosX < realMovePosX && mRealDownPosY > realMovePosY) {
+            rectanglePointFs[1].x = rectanglePointFs[0].x;
+            rectanglePointFs[1].y = rectanglePointFs[0].y - Math.abs(mDisY);
+            rectanglePointFs[2].x = realMovePosX;
+            rectanglePointFs[2].y = realMovePosY;
+            rectanglePointFs[3].x = realMovePosX;
+            rectanglePointFs[3].y = realMovePosY + Math.abs(mDisY);
+        }
+        //right top to left bottom
+        else {
+            rectanglePointFs[1].x = rectanglePointFs[0].x;
+            rectanglePointFs[1].y = rectanglePointFs[0].y + Math.abs(mDisY);
+            rectanglePointFs[2].x = realMovePosX;
+            rectanglePointFs[2].y = realMovePosY;
+            rectanglePointFs[3].x = realMovePosX;
+            rectanglePointFs[3].y = realMovePosY - Math.abs(mDisY);
+        }
+    }
+
+    /**
+     * the angle of arrow to rotate
+     */
+    private double mAngle;
+    private float heightOfArrow = 40.0f;
+    private float widthOfArrow = 10.0f;
+    private float mDisX;
+    private float mDisY;
+
+    private void updateDistanceXYAndAngle(float realMovePosX, float realMovePosY) {
+        updateDistanceXY(realMovePosX, realMovePosY);
+        mAngle = Math.atan(mDisY / mDisX);
+    }
+
+    private void updateDistanceXY(float realMovePosX, float realMovePosY) {
+        mDisX = realMovePosX - mRealDownPosX;
+        mDisY = realMovePosY - mRealDownPosY;
+    }
+
+    public void updateTrianglePointFs(Shape shape, float realMovePosX, float realMovePosY) {
+        PointF[] trianglePointFs = shape.getPoints();
+
+        trianglePointFs[0].x = realMovePosX;
+        trianglePointFs[0].y = realMovePosY;
+
+        double sH = Math.abs(Math.sin(mAngle) * heightOfArrow);
+        double cH = Math.abs(Math.cos(mAngle) * heightOfArrow);
+
+        double sW = Math.abs(Math.sin(mAngle) * widthOfArrow);
+        double cW = Math.abs(Math.cos(mAngle) * widthOfArrow);
+
+
+        //left top to right bottom
+        if (mRealDownPosX <= realMovePosX && mRealDownPosY <= realMovePosY) {
+            trianglePointFs[1].y =
+                    (float) (trianglePointFs[0].y - sH);
+            trianglePointFs[1].x =
+                    (float) (trianglePointFs[0].x - cH);
+
+            trianglePointFs[2].y = (float) (trianglePointFs[1].y - cW);
+            trianglePointFs[2].x = (float) (trianglePointFs[1].x + sW);
+
+            trianglePointFs[3].y = (float) (trianglePointFs[1].y + cW);
+            trianglePointFs[3].x = (float) (trianglePointFs[1].x - sW);
+        }
+        //right bottom to left top
+        else if (mRealDownPosX >= realMovePosX && mRealDownPosY >= realMovePosY) {
+            trianglePointFs[1].y =
+                    (float) (trianglePointFs[0].y + sH);
+            trianglePointFs[1].x =
+                    (float) (trianglePointFs[0].x + cH);
+
+            trianglePointFs[2].y = (float) (trianglePointFs[1].y + cW);
+            trianglePointFs[2].x = (float) (trianglePointFs[1].x - sW);
+
+            trianglePointFs[3].y = (float) (trianglePointFs[1].y - cW);
+            trianglePointFs[3].x = (float) (trianglePointFs[1].x + sW);
+        }
+        //left bottom to right top
+        else if (mRealDownPosX < realMovePosX && mRealDownPosY > realMovePosY) {
+            trianglePointFs[1].y =
+                    (float) (trianglePointFs[0].y + sH);
+            trianglePointFs[1].x =
+                    (float) (trianglePointFs[0].x - cH);
+
+            trianglePointFs[2].y = (float) (trianglePointFs[1].y - cW);
+            trianglePointFs[2].x = (float) (trianglePointFs[1].x - sW);
+
+            trianglePointFs[3].y = (float) (trianglePointFs[1].y + cW);
+            trianglePointFs[3].x = (float) (trianglePointFs[1].x + sW);
+        }
+        //right top to left bottom
+        else {
+            trianglePointFs[1].y =
+                    (float) (trianglePointFs[0].y - sH);
+            trianglePointFs[1].x =
+                    (float) (trianglePointFs[0].x + cH);
+
+            trianglePointFs[2].y = (float) (trianglePointFs[1].y + cW);
+            trianglePointFs[2].x = (float) (trianglePointFs[1].x + sW);
+
+            trianglePointFs[3].y = (float) (trianglePointFs[1].y - cW);
+            trianglePointFs[3].x = (float) (trianglePointFs[1].x - sW);
         }
     }
 
