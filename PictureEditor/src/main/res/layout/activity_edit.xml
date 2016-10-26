@@ -104,16 +104,15 @@
         app:ResRubberOff="@mipmap/rubberoff"
         app:ResRubberOn="@mipmap/rubberon"></com.halohoop.pictureeditor.widgets.PenceilAndRubberView>
 
-    <FrameLayout
+    <com.halohoop.pictureeditor.widgets.HandledTouchFrameLayout
         android:id="@+id/progress_container"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:background="#338e8e8e"
-        android:visibility="gone">
+        android:background="#338e8e8e">
 
         <ProgressBar
             android:layout_width="50dp"
             android:layout_height="50dp"
             android:layout_gravity="center"/>
-    </FrameLayout>
+    </com.halohoop.pictureeditor.widgets.HandledTouchFrameLayout>
 </RelativeLayout>

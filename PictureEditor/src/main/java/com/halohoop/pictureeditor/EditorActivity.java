@@ -40,6 +40,7 @@ import com.halohoop.pictureeditor.widgets.ColorPickerView;
 import com.halohoop.pictureeditor.widgets.MarkableImageView;
 import com.halohoop.pictureeditor.widgets.PenceilAndRubberView;
 import com.halohoop.pictureeditor.widgets.ShapesChooseView;
+import com.halohoop.pictureeditor.widgets.beans.Shape;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -175,6 +176,9 @@ public class EditorActivity extends AppCompatActivity
         if (index == ActionsChooseView.FRAGMENT_MOSAIC) {
             mMarkableImageView.setEditMode(MarkableImageView.EDIT_MODE.MOSAIC);
         }
+        if (index == ActionsChooseView.FRAGMENT_SHAPE) {
+            mMarkableImageView.setEditMode(MarkableImageView.EDIT_MODE.SHAPE);
+        }
         mCurrentIndex = index;
     }
 
@@ -243,7 +247,17 @@ public class EditorActivity extends AppCompatActivity
 
     @Override
     public void onShapeSelected(int index) {
-
+        if (index == 0) {//line
+            mMarkableImageView.setShapeType(Shape.SHAPE_TYPE.LINE);
+        } else if (index == 1) {//arrow
+            mMarkableImageView.setShapeType(Shape.SHAPE_TYPE.ARROW);
+        } else if (index == 2) {//rect
+            mMarkableImageView.setShapeType(Shape.SHAPE_TYPE.RECT);
+        } else if (index == 3) {//circle
+            mMarkableImageView.setShapeType(Shape.SHAPE_TYPE.CIRCLE);
+        } else if (index == 4) {//roundrect
+            mMarkableImageView.setShapeType(Shape.SHAPE_TYPE.ROUNDRECT);
+        }
     }
 
     @Override
