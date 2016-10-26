@@ -339,8 +339,8 @@ public class MarkableImageView extends PhotoView {
 
     private void createNewMove(float realDownPosX, float realDownPosY) {
         //create a new move
-        EveryMove everyMove = new EveryMove();
         if (mEditMode == EDIT_MODE.PEN) {
+            EveryMove everyMove = new EveryMove();
             everyMove.mEditMode = EDIT_MODE.PEN;
             everyMove.mColor = mColor;
             everyMove.mAlpha = mDrawPaint.getAlpha();
@@ -348,20 +348,26 @@ public class MarkableImageView extends PhotoView {
             everyMove.mPath = new Path();
             everyMove.mPath.reset();
             everyMove.mPath.moveTo(realDownPosX, realDownPosY);
+            mEveryMoves.add(everyMove);
         } else if (mEditMode == EDIT_MODE.RUBBER) {
-            everyMove.mEditMode = EDIT_MODE.RUBBER;
-            everyMove.mStrokeWidth = mRubberPaint.getStrokeWidth();
-            everyMove.mPath = new Path();
-            everyMove.mPath.reset();
-            everyMove.mPath.moveTo(realDownPosX, realDownPosY);
+            if (mEveryMoves.size()>0) {
+                EveryMove everyMove = new EveryMove();
+                everyMove.mEditMode = EDIT_MODE.RUBBER;
+                everyMove.mStrokeWidth = mRubberPaint.getStrokeWidth();
+                everyMove.mPath = new Path();
+                everyMove.mPath.reset();
+                everyMove.mPath.moveTo(realDownPosX, realDownPosY);
+                mEveryMoves.add(everyMove);
+            }
         } else if (mEditMode == EDIT_MODE.MOSAIC) {
+            EveryMove everyMove = new EveryMove();
             everyMove.mEditMode = EDIT_MODE.MOSAIC;
             everyMove.mStrokeWidth = mMosaicPaint.getStrokeWidth();
             everyMove.mPath = new Path();
             everyMove.mPath.reset();
             everyMove.mPath.moveTo(realDownPosX, realDownPosY);
+            mEveryMoves.add(everyMove);
         }
-        mEveryMoves.add(everyMove);
     }
 
     private void updateNewMove(float realMovePosX, float realMovePosY) {
