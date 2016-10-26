@@ -142,7 +142,13 @@ public class MarkableImageView extends PhotoView {
         getRealScaleRatio();
     }
 
+    enum VERTICAL_HORIZONTAL {
+        VERTICAL, HORIZONTAL
+    }
+
     private float mFirstScale = 1;
+    //图片 横图和正方形图 或者是 竖图
+    private VERTICAL_HORIZONTAL mVerticalHorizontal = VERTICAL_HORIZONTAL.VERTICAL;
 
     private void getRealScaleRatio() {
         RectF displayRect = getDisplayRect();
@@ -151,27 +157,30 @@ public class MarkableImageView extends PhotoView {
                 || this.mMainBitmap.getHeight() > getMeasuredHeight()) {
             //横图还是竖图
             if (this.mMainBitmap.getWidth() >= this.mMainBitmap.getHeight()) {
-                //横图
+                //横图或者正方形
                 mRealScaleRatio = ((float) getMeasuredWidth()) / ((float) this.mMainBitmap
                         .getWidth());
                 mFirstScale = mRealScaleRatio;
-                LogUtils.i("halohoop11:" + mFirstScale);
+                mVerticalHorizontal = VERTICAL_HORIZONTAL.HORIZONTAL;
             } else {//竖图
                 mRealScaleRatio = ((float) getMeasuredHeight()) / ((float) this.mMainBitmap
                         .getHeight());
                 mFirstScale = mRealScaleRatio;
+                mVerticalHorizontal = VERTICAL_HORIZONTAL.VERTICAL;
             }
         } else {//图片长宽都不大于控件长宽
             //横图还是竖图
             if (this.mMainBitmap.getWidth() >= this.mMainBitmap.getHeight()) {
-                //横图
+                //横图或者正方形
                 mRealScaleRatio = ((float) getMeasuredWidth()) / ((float) this.mMainBitmap
                         .getWidth());
                 mFirstScale = mRealScaleRatio;
+                mVerticalHorizontal = VERTICAL_HORIZONTAL.HORIZONTAL;
             } else {//竖图
                 mRealScaleRatio = ((float) getMeasuredHeight()) / ((float) this.mMainBitmap
                         .getHeight());
                 mFirstScale = mRealScaleRatio;
+                mVerticalHorizontal = VERTICAL_HORIZONTAL.VERTICAL;
             }
         }
     }
@@ -350,12 +359,20 @@ public class MarkableImageView extends PhotoView {
 
     private float getRealPosYOnBitmap(float y) {
         RectF displayRect = getDisplayRect();
-        return (y - displayRect.top) / mRealScaleRatio;
+        if (mVerticalHorizontal == VERTICAL_HORIZONTAL.HORIZONTAL) {
+            return (y - displayRect.top) / mRealScaleRatio;
+        } else {//mVerticalHorizontal == VERTICAL_HORIZONTAL.VERTICAL
+            return (Math.abs(displayRect.top) + y) / mRealScaleRatio;
+        }
     }
 
     private float getRealPosXOnBitmap(float x) {
         RectF displayRect = getDisplayRect();
-        return (Math.abs(displayRect.left) + x) / mRealScaleRatio;
+        if (mVerticalHorizontal == VERTICAL_HORIZONTAL.HORIZONTAL) {
+            return (Math.abs(displayRect.left) + x) / mRealScaleRatio;
+        } else {//mVerticalHorizontal == VERTICAL_HORIZONTAL.VERTICAL
+            return (x - displayRect.left) / mRealScaleRatio;
+        }
     }
 
     private void updateRealScaleRatio() {
