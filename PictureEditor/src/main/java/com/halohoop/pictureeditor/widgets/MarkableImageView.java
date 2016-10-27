@@ -34,6 +34,7 @@ import android.graphics.RectF;
 import android.graphics.Region;
 import android.graphics.Shader;
 import android.net.Uri;
+import android.os.AsyncTask;
 import android.provider.MediaStore;
 import android.util.AttributeSet;
 import android.util.DisplayMetrics;
@@ -938,7 +939,8 @@ public class MarkableImageView extends PhotoView {
         mDisplay.getRealMetrics(mDisplayMetrics);
 
         // Get the various target sizes
-        mNotificationIconSize = r.getDimensionPixelSize(android.R.dimen.notification_large_icon_height);
+        mNotificationIconSize = r.getDimensionPixelSize(android.R.dimen
+                .notification_large_icon_height);
         int iconSize = mNotificationIconSize;
         // Scale has to account for both sides of the bg
         mBgPadding = (float) r.getDimensionPixelSize(R.dimen.global_screenshot_bg_padding);
@@ -957,7 +959,8 @@ public class MarkableImageView extends PhotoView {
         mPreviewWidth = panelWidth;
         mPreviewHeight = r.getDimensionPixelSize(R.dimen.notification_max_height);
 
-        Bitmap preview = Bitmap.createBitmap(mPreviewWidth, mPreviewHeight, mMainBitmap.getConfig());
+        Bitmap preview = Bitmap.createBitmap(mPreviewWidth, mPreviewHeight, mMainBitmap.getConfig
+                ());
         Canvas c = new Canvas(preview);
         Paint paint = new Paint();
         ColorMatrix desat = new ColorMatrix();
@@ -1060,6 +1063,20 @@ public class MarkableImageView extends PhotoView {
                 getContext().getResources().getString(com.android.internal.R.string.delete),
                 PendingIntent.getBroadcast(getContext(), 0, deleteIntent,
                         PendingIntent.FLAG_CANCEL_CURRENT));
+    }
+
+    class SaveTask extends AsyncTask<Void, Void, Void> {
+
+        @Override
+        protected Void doInBackground(Void... params) {
+            //new a notification
+            return null;
+        }
+
+        @Override
+        protected void onPostExecute(Void aVoid) {
+            super.onPostExecute(aVoid);
+        }
     }
 
     private OnSaveCompleteListener mOnSaveCompleteListener;
