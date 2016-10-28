@@ -12,6 +12,9 @@
 
 package com.halohoop.pictureeditor;
 
+import android.animation.Animator;
+import android.animation.AnimatorListenerAdapter;
+import android.animation.ValueAnimator;
 import android.content.DialogInterface;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -237,6 +240,7 @@ public class EditorActivity extends AppCompatActivity
         } else if (v.getId() == R.id.iv_save) {
             mMarkableImageView.save();
         } else if (v.getId() == R.id.iv_stepbackward) {
+
         } else if (v.getId() == R.id.iv_stepforward) {
         }
     }

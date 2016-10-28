@@ -416,7 +416,7 @@ public class MarkableImageView extends PhotoView {
 
     private void pushIntoMoves(EveryMove everyMove) {
         mEveryMoves.add(everyMove);
-        if (mEveryMoves.size() > 10) {
+        if (mEveryMoves.size() > 20) {
             //将前5个固定到最终的图片上
             new Thread(new Runnable() {
 
@@ -431,7 +431,7 @@ public class MarkableImageView extends PhotoView {
                     }
                     final Bitmap oldBitmap = mCacheMutableBitmap;
                     mCacheMutableBitmap = cacheMutableBitmap;
-                    for (int i = 0; i < 5; i++) {
+                    for (int i = 0; i <= 10; i++) {
                         EveryMove move = mEveryMoves.remove(0);
                         fixMovesToBitmap(mDrawCanvas2, move);
                     }
