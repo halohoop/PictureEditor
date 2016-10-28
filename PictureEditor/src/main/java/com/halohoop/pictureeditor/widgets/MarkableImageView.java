@@ -759,7 +759,6 @@ public class MarkableImageView extends PhotoView {
                 case LINE:
                     canvas.drawLine(pointFs[0].x, pointFs[0].y,
                             pointFs[1].x, pointFs[1].y, mShapePaint);
-                    mShapePaint.setStyle(Paint.Style.FILL);
                     break;
                 case ARROW:
                     //draw arrow
@@ -784,13 +783,11 @@ public class MarkableImageView extends PhotoView {
                     float maxRightBottomY = Math.max(pointFs[0].y, pointFs[2].y);
                     canvas.drawRect(minLeftTopX, minLeftTopY,
                             maxRightBottomX, maxRightBottomY, mShapePaint);
-                    mShapePaint.setStyle(Paint.Style.FILL);
                     break;
                 case CIRCLE:
                     float radius = shape.getRadius();
                     mShapePaint.setStyle(Paint.Style.STROKE);
                     canvas.drawCircle(pointFs[0].x, pointFs[0].y, radius, mShapePaint);
-                    mShapePaint.setStyle(Paint.Style.FILL);
                     break;
                 case ROUNDRECT:
                     mShapePaint.setStyle(Paint.Style.STROKE);
@@ -801,7 +798,6 @@ public class MarkableImageView extends PhotoView {
                     canvas.drawRoundRect(minRoundLeftTopX, minRoundLeftTopY,
                             maxRoundRightBottomX, maxRoundRightBottomY,
                             radiusCornor, radiusCornor * 2, mShapePaint);
-                    mShapePaint.setStyle(Paint.Style.FILL);
                     break;
             }
         } catch (IndexOutOfBoundsException ex) {
