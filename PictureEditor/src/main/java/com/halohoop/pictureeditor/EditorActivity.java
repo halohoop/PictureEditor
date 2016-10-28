@@ -165,7 +165,7 @@ public class EditorActivity extends AppCompatActivity
     public void onActionSelected(int index) {
         //show or hide pen and rubber
         if (index != ActionsChooseView.FRAGMENT_PEN) {
-            mPenceilAndRubberView.setVisibility(View.GONE);
+            mPenceilAndRubberView.setVisibility(View.INVISIBLE);//此处不能使用gone，导致焦点变化的bug
         } else {
             mPenceilAndRubberView.setVisibility(View.VISIBLE);
         }

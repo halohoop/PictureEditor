@@ -70,7 +70,6 @@ public class MarkableImageView extends PhotoView {
     private Paint mShapePaint;
     private float mShapePaintStrokeWidth = 3;
     private Bitmap mMutableBitmap;
-    private Bitmap mMutableBitmap1;
     private Canvas mDrawCanvas;
     private float mRealScaleRatio = 1;
     private float mRealDownPosX;
@@ -81,18 +80,8 @@ public class MarkableImageView extends PhotoView {
     //圆角矩形角半径
     private float radiusCornor = 5.0f;
     private Canvas mDrawCanvas2;
-    private Notification.Builder mNotificationBuilder;
-    private Notification.Builder mPublicNotificationBuilder;
-    private WindowManager mWindowManager;
-    private NotificationManager mNotificationManager;
-    private Display mDisplay;
-    private DisplayMetrics mDisplayMetrics;
-    private int mNotificationIconSize;
-    private float mBgPadding;
-    private float mBgPaddingScale;
-    private int mPreviewWidth;
-    private int mPreviewHeight;
-    private Notification.BigPictureStyle mNotificationStyle;
+    //头部head bar的高度，单位dp
+    private final int HEAD_BAR_HEIGHT = 60;
 
     public MarkableImageView(Context context) {
         this(context, null);
@@ -888,7 +877,7 @@ public class MarkableImageView extends PhotoView {
             canvas.clipRect(displayRect, Region.Op.INTERSECT);//get two rects intersect parts
             canvas.save();
             canvas.setMatrix(getImageMatrix());
-            canvas.translate(0, 60/*dp*/ * 2 / mRealScaleRatio);
+            canvas.translate(0, HEAD_BAR_HEIGHT/*头部bar的高度dp*/ * 2 / mRealScaleRatio);
             if (mCacheMutableBitmap != null && !mCacheMutableBitmap.isRecycled()) {
                 canvas.drawBitmap(mCacheMutableBitmap, 0, 0, null);
             }
@@ -919,153 +908,24 @@ public class MarkableImageView extends PhotoView {
         float mTextSize;
     }
 
-    private static boolean mTickerAddSpace;
-
     public void save() {
         //do save
         String fileName = "";
         String filePath = "";
-        Bitmap savedBitmap = null;
-        if (mOnSaveCompleteListener != null) {
-            mOnSaveCompleteListener.onComplete("filePath", "fileName");
-        }
-
-        Resources r = getResources();
-        mWindowManager = (WindowManager) getContext().getSystemService(Context.WINDOW_SERVICE);
-        mNotificationManager = (NotificationManager) getContext().getSystemService(Context
-                .NOTIFICATION_SERVICE);
-        mDisplay = mWindowManager.getDefaultDisplay();
-        mDisplayMetrics = new DisplayMetrics();
-        mDisplay.getRealMetrics(mDisplayMetrics);
-
-        // Get the various target sizes
-        mNotificationIconSize = r.getDimensionPixelSize(android.R.dimen
-                .notification_large_icon_height);
-        int iconSize = mNotificationIconSize;
-        // Scale has to account for both sides of the bg
-        mBgPadding = (float) r.getDimensionPixelSize(R.dimen.global_screenshot_bg_padding);
-        mBgPaddingScale = mBgPadding / mDisplayMetrics.widthPixels;
-
-        // determine the optimal preview size
-        int panelWidth = 0;
-        try {
-            panelWidth = r.getDimensionPixelSize(R.dimen.notification_panel_width);
-        } catch (Resources.NotFoundException e) {
-        }
-        if (panelWidth <= 0) {
-            // includes notification_panel_width==match_parent (-1)
-            panelWidth = mDisplayMetrics.widthPixels;
-        }
-        mPreviewWidth = panelWidth;
-        mPreviewHeight = r.getDimensionPixelSize(R.dimen.notification_max_height);
-
-        Bitmap preview = Bitmap.createBitmap(mPreviewWidth, mPreviewHeight, mMainBitmap.getConfig
-                ());
-        Canvas c = new Canvas(preview);
-        Paint paint = new Paint();
-        ColorMatrix desat = new ColorMatrix();
-        desat.setSaturation(0.25f);
-        paint.setColorFilter(new ColorMatrixColorFilter(desat));
-        Matrix matrix = new Matrix();
-        matrix.postTranslate((mPreviewWidth - mMainBitmap.getWidth()) / 2,
-                (mPreviewHeight - mMainBitmap.getHeight()) / 2);
-        c.drawBitmap(savedBitmap, matrix, paint);
-        c.drawColor(0x40FFFFFF);
-        c.setBitmap(null);
-        Bitmap croppedIcon = Bitmap.createScaledBitmap(preview, iconSize, iconSize, true);
-
-        final long now = System.currentTimeMillis();
-        mTickerAddSpace = !mTickerAddSpace;
-        mNotificationBuilder = new Notification.Builder(getContext())
-                .setTicker(r.getString(R.string.screenshot_saving_ticker)
-                        + (mTickerAddSpace ? " " : ""))
-                .setContentTitle(r.getString(R.string.screenshot_saving_title))
-                .setContentText(r.getString(R.string.screenshot_saving_text))
-                .setSmallIcon(R.mipmap.stat_notify_image)
-                .setWhen(now)
-                .setColor(r.getColor(com.android.internal.R.color
-                        .system_notification_accent_color));
-        mNotificationStyle = new Notification.BigPictureStyle()
-                .bigPicture(preview);
-        mNotificationBuilder.setStyle(mNotificationStyle);
-
-        // For "public" situations we want to show all the same info but
-        // omit the actual screenshot image.
-        mPublicNotificationBuilder = new Notification.Builder(getContext())
-                .setContentTitle(r.getString(R.string.screenshot_saving_title))
-                .setContentText(r.getString(R.string.screenshot_saving_text))
-                .setSmallIcon(R.mipmap.stat_notify_image)
-                .setCategory(Notification.CATEGORY_PROGRESS)
-                .setWhen(now)
-                .setColor(r.getColor(
-                        com.android.internal.R.color.system_notification_accent_color));
-
-        //mNotificationBuilder.setPublicVersion(mPublicNotificationBuilder.build());
-
-        Notification n = mNotificationBuilder.build();
-        //n.flags |= Notification.FLAG_NO_CLEAR;
-        mNotificationManager.notify(SCREENSHOT_NOTIFICATION_ID, n);
-
-        // On the tablet, the large icon makes the notification appear as if it is clickable (and
-        // on small devices, the large icon is not shown) so defer showing the large icon until
-        // we compose the final post-save notification below.
-        mNotificationBuilder.setLargeIcon(croppedIcon);
-        // But we still don't set it for the expanded view, allowing the smallIcon to show here.
-        mNotificationStyle.bigLargeIcon((Bitmap) null);
-    }
-
-    private static final String SCREENSHOTS_DIR_NAME = "Screenshots";
-    private static final String SCREENSHOT_FILE_NAME_TEMPLATE = "Screenshot_%s.png";
-    private static final String SCREENSHOT_SHARE_SUBJECT_TEMPLATE = "Screenshot (%s)";
-    protected static final int SCREENSHOT_NOTIFICATION_ID = 789;
-
-    private void notification(String imageFilePath,
-                              String imageFileName,
-                              long imageTime,
-                              long dateSeconds) {
-        // Save the screenshot to the MediaStore
-        ContentValues values = new ContentValues();
-        ContentResolver resolver = getContext().getContentResolver();
-        values.put(MediaStore.Images.ImageColumns.DATA, imageFilePath);
-        values.put(MediaStore.Images.ImageColumns.TITLE, imageFileName);
-        values.put(MediaStore.Images.ImageColumns.DISPLAY_NAME, imageFileName);
-        values.put(MediaStore.Images.ImageColumns.DATE_TAKEN, imageTime);
-        values.put(MediaStore.Images.ImageColumns.DATE_ADDED, dateSeconds);
-        values.put(MediaStore.Images.ImageColumns.DATE_MODIFIED, dateSeconds);
-        values.put(MediaStore.Images.ImageColumns.MIME_TYPE, "image/png");
-        values.put(MediaStore.Images.ImageColumns.WIDTH, mMainBitmap.getWidth());
-        values.put(MediaStore.Images.ImageColumns.HEIGHT, mMainBitmap.getHeight());
-        values.put(MediaStore.Images.ImageColumns.SIZE, new File(imageFilePath).length());
-        Uri uri = resolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values);
-
-        String subjectDate = DateFormat.getDateTimeInstance().format(new Date(imageTime));
-        String subject = String.format(Locale.ENGLISH, SCREENSHOT_SHARE_SUBJECT_TEMPLATE,
-                subjectDate);
-        Intent sharingIntent = new Intent(Intent.ACTION_SEND);
-        sharingIntent.setType("image/png");
-        sharingIntent.putExtra(Intent.EXTRA_STREAM, uri);
-        sharingIntent.putExtra(Intent.EXTRA_SUBJECT, subject);
-
-        Intent chooserIntent = Intent.createChooser(sharingIntent, null);
-        chooserIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK
-                | Intent.FLAG_ACTIVITY_NEW_TASK);
-
-        mNotificationBuilder.addAction(R.mipmap.ic_menu_share,
-                getContext().getResources().getString(com.android.internal.R.string.share),
-                PendingIntent.getActivity(getContext(), 0, chooserIntent,
-                        PendingIntent.FLAG_CANCEL_CURRENT));
-
-        Intent deleteIntent = new Intent();
-        deleteIntent.setClass(getContext(), DeleteScreenshot.class);
-        deleteIntent.putExtra(DeleteScreenshot.SCREENSHOT_URI, uri.toString());
-
-        mNotificationBuilder.addAction(R.mipmap.ic_menu_delete,
-                getContext().getResources().getString(com.android.internal.R.string.delete),
-                PendingIntent.getBroadcast(getContext(), 0, deleteIntent,
-                        PendingIntent.FLAG_CANCEL_CURRENT));
+        new SaveTask(fileName, filePath, mMainBitmap,mMutableBitmap).execute();
     }
 
     class SaveTask extends AsyncTask<Void, Void, Void> {
+
+        private String fileName = "";
+        private String filePath = "";
+        private Bitmap[] savedBitmaps = null;
+
+        public SaveTask(String fileName, String filePath, Bitmap... savedBitmap) {
+            this.fileName = fileName;
+            this.filePath = filePath;
+            this.savedBitmaps = savedBitmap;
+        }
 
         @Override
         protected Void doInBackground(Void... params) {
@@ -1076,6 +936,10 @@ public class MarkableImageView extends PhotoView {
         @Override
         protected void onPostExecute(Void aVoid) {
             super.onPostExecute(aVoid);
+
+            if (mOnSaveCompleteListener != null) {
+                mOnSaveCompleteListener.onComplete("filePath", "fileName");
+            }
         }
     }
 

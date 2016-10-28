@@ -109,7 +109,7 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:background="#338e8e8e">
-
+        <!--如果要修改这里的高度请一并修改MarkableImageiew里面的HEAD_BAR_HEIGHT变量的大小-->
         <ProgressBar
             android:layout_width="50dp"
             android:layout_height="50dp"
