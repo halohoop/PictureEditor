@@ -12,9 +12,6 @@
 
 package com.halohoop.pictureeditor;
 
-import android.animation.Animator;
-import android.animation.AnimatorListenerAdapter;
-import android.animation.ValueAnimator;
 import android.content.DialogInterface;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -27,7 +24,6 @@ import android.support.v7.app.AppCompatActivity;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.SeekBar;
-import android.widget.Toast;
 
 import com.halohoop.pictureeditor.controllers.ToolDetailsPagerAdapter;
 import com.halohoop.pictureeditor.pieces.ColorPickerDetailFragment;
@@ -38,7 +34,6 @@ import com.halohoop.pictureeditor.pieces.RubberDetailFragment;
 import com.halohoop.pictureeditor.pieces.ShapeDetailFragment;
 import com.halohoop.pictureeditor.pieces.SimpleCustomDialog;
 import com.halohoop.pictureeditor.pieces.TextDetailFragment;
-import com.halohoop.pictureeditor.utils.BitmapUtils;
 import com.halohoop.pictureeditor.utils.LogUtils;
 import com.halohoop.pictureeditor.widgets.ActionsChooseView;
 import com.halohoop.pictureeditor.widgets.ColorPickerView;
