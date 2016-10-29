@@ -23,4 +23,10 @@ public class LogUtils {
             Log.i(TAG, TAG + "--" + s);
         }
     }
+
+    public static void e(String s) {
+        if (DEBUG) {
+            Log.e(TAG, TAG + "--" + s);
+        }
+    }
 }

@@ -25,6 +25,7 @@ import android.os.SystemClock;
 import android.support.v4.view.ViewPager;
 import android.support.v7.app.AppCompatActivity;
 import android.view.View;
+import android.widget.ImageView;
 import android.widget.SeekBar;
 import android.widget.Toast;
 
@@ -56,7 +57,8 @@ public class EditorActivity extends AppCompatActivity
         ColorPickerView.ColorPickListener,
         ShapesChooseView.OnSelectedListener,
         PenceilAndRubberView.PenceilOrRubberModeCallBack,
-        DialogInterface.OnClickListener, MarkableImageView.OnSaveCompleteListener {
+        DialogInterface.OnClickListener,
+        MarkableImageView.OnSaveCompleteListener, MarkableImageView.OnButtonStateListener {
 
     private ActionsChooseView mActionsChooseView;
     private ViewPager mNoScrollVp;
@@ -70,6 +72,9 @@ public class EditorActivity extends AppCompatActivity
     private MarkableImageView mMarkableImageView;
     private View mProgressContainer;
     private PenceilAndRubberView mPenceilAndRubberView;
+    private ImageView mIvStepbackward;
+    private ImageView mIvStepforward;
+    private ImageView mIvSave;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -77,15 +82,25 @@ public class EditorActivity extends AppCompatActivity
         setContentView(R.layout.activity_edit);
         mProgressContainer = findViewById(R.id.progress_container);
         findViewById(R.id.iv_cancel).setOnClickListener(this);
-        findViewById(R.id.iv_save).setOnClickListener(this);
-        findViewById(R.id.iv_stepbackward).setOnClickListener(this);
-        findViewById(R.id.iv_stepforward).setOnClickListener(this);
+        mIvSave = (ImageView) findViewById(R.id.iv_save);
+        mIvStepforward = (ImageView) findViewById(R.id.iv_stepforward);
+        mIvStepbackward = (ImageView) findViewById(R.id.iv_stepbackward);
+        mIvStepforward.setOnClickListener(this);
+        mIvStepbackward.setOnClickListener(this);
+        mIvSave.setOnClickListener(this);
+        mIvStepforward.setEnabled(false);
+        mIvStepbackward.setEnabled(false);
+        mIvSave.setEnabled(false);
         mNoScrollVp = (ViewPager) findViewById(R.id.no_scroll_vp);
         mPenceilAndRubberView = (PenceilAndRubberView) findViewById(R.id.penceil_and_rubber_view);
         mPenceilAndRubberView.setPenceilOrRubberModeCallBack(this);
         mMarkableImageView = (MarkableImageView) findViewById(R.id.markableview);
         mMarkableImageView.setMaximumScale(6);
         mMarkableImageView.setOnSaveCompleteListener(this);
+        mMarkableImageView.setUndoButtonResId(R.id.iv_stepbackward);
+        mMarkableImageView.setRedoButtonResId(R.id.iv_stepforward);
+        mMarkableImageView.setSaveButtonResId(R.id.iv_save);
+        mMarkableImageView.setOnButtonStateListener(this);
         mNoScrollVp.setOffscreenPageLimit(7);//important
         mActionsChooseView = (ActionsChooseView) findViewById(R.id.actions_choose_view);
         mActionsChooseView.setOnSelectedListener(this);
@@ -238,10 +253,14 @@ public class EditorActivity extends AppCompatActivity
                 finish();
             }
         } else if (v.getId() == R.id.iv_save) {
+            LogUtils.i("iv_save");
             mMarkableImageView.save();
         } else if (v.getId() == R.id.iv_stepbackward) {
-
+            LogUtils.i("iv_stepbackward");
+            mMarkableImageView.undo();
         } else if (v.getId() == R.id.iv_stepforward) {
+            LogUtils.i("iv_stepforward");
+            mMarkableImageView.redo();
         }
     }
 
@@ -308,7 +327,45 @@ public class EditorActivity extends AppCompatActivity
     }
 
     @Override
-    public void onComplete(String path,String fileName) {
+    public void onComplete(String path, String fileName) {
         //Notification
+    }
+
+    @Override
+    public void onUpdateRedoUndoState(int id, boolean enable) {
+        if (id == R.id.iv_stepforward) {//redo
+            if (enable) {
+                mIvStepforward.setEnabled(true);
+                mIvStepforward.setImageDrawable(getResources().getDrawable(R.drawable
+                        .stepforward));
+            } else {
+                mIvStepforward.setEnabled(false);
+                mIvStepforward.setImageDrawable(getResources().getDrawable(R.drawable
+                        .stepforward_off));
+            }
+        } else if (id == R.id.iv_stepbackward) {//undo
+            if (enable) {
+                mIvStepbackward.setEnabled(true);
+                mIvStepbackward.setImageDrawable(getResources().getDrawable(R.drawable.stepback));
+            } else {
+                mIvStepbackward.setEnabled(false);
+                mIvStepbackward.setImageDrawable(getResources().getDrawable(R.drawable
+                        .stepback_off));
+            }
+        }
+    }
+
+    @Override
+    public void onUpdateSavetate(int id, boolean enable) {
+        if (id == R.id.iv_save) {//save
+            if (enable) {
+                mIvSave.setEnabled(true);
+                mIvSave.setImageDrawable(getResources().getDrawable(R.drawable.save));
+            } else {
+                mIvSave.setEnabled(false);
+                mIvSave.setImageDrawable(getResources().getDrawable(R.drawable
+                        .save_off));
+            }
+        }
     }
 }

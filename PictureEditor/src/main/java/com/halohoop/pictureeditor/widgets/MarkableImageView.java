@@ -12,45 +12,24 @@
 
 package com.halohoop.pictureeditor.widgets;
 
-import android.app.Notification;
-import android.app.NotificationManager;
-import android.app.PendingIntent;
-import android.content.ContentResolver;
-import android.content.ContentValues;
 import android.content.Context;
-import android.content.Intent;
-import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.BitmapShader;
 import android.graphics.Canvas;
 import android.graphics.Color;
-import android.graphics.ColorMatrix;
-import android.graphics.ColorMatrixColorFilter;
-import android.graphics.Matrix;
 import android.graphics.Paint;
 import android.graphics.Path;
 import android.graphics.PointF;
 import android.graphics.RectF;
 import android.graphics.Region;
 import android.graphics.Shader;
-import android.net.Uri;
 import android.os.AsyncTask;
-import android.provider.MediaStore;
 import android.util.AttributeSet;
-import android.util.DisplayMetrics;
-import android.view.Display;
 import android.view.MotionEvent;
-import android.view.WindowManager;
 
-import com.halohoop.pictureeditor.R;
-import com.halohoop.pictureeditor.controllers.DeleteScreenshot;
 import com.halohoop.pictureeditor.utils.LogUtils;
 import com.halohoop.pictureeditor.widgets.beans.Shape;
 
-import java.io.File;
-import java.text.DateFormat;
-import java.util.Date;
-import java.util.Locale;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 import uk.co.senab.photoview.PhotoView;
@@ -365,6 +344,7 @@ public class MarkableImageView extends PhotoView {
                 }
                 break;
             case MotionEvent.ACTION_UP:
+                updateRedoUndoState();
                 mMode = MODE.EDIT;
                 mIsEditing = false;
                 finalDrawOnBitmap();
@@ -373,6 +353,14 @@ public class MarkableImageView extends PhotoView {
         }
         updateRealScaleRatio();
         return true;
+    }
+
+    private void updateRedoUndoState() {
+        if (mOnButtonStateListener != null) {
+            mOnButtonStateListener.onUpdateRedoUndoState(mRedoButtonResId, mRedoStack.size() > 0);
+            mOnButtonStateListener.onUpdateRedoUndoState(mUndoButtonResId, mEveryMoves.size() > 0);
+            mOnButtonStateListener.onUpdateSavetate(mSaveButtonResId, mEveryMoves.size() > 0);
+        }
     }
 
     private void createNewMove(float realDownPosX, float realDownPosY) {
@@ -416,8 +404,12 @@ public class MarkableImageView extends PhotoView {
 
     private void pushIntoMoves(EveryMove everyMove) {
         mEveryMoves.add(everyMove);
-        if (mEveryMoves.size() > 20) {
-            //将前5个固定到最终的图片上
+        //只要做了新操作就把redo集合清空
+        mRedoStack.clear();
+        int maxSize = 20;
+        final int fixSize = 10;
+        if (mEveryMoves.size() > maxSize) {
+            //将前部分(maxSize-maxSize)固定到最终的图片上
             new Thread(new Runnable() {
 
                 @Override
@@ -431,7 +423,7 @@ public class MarkableImageView extends PhotoView {
                     }
                     final Bitmap oldBitmap = mCacheMutableBitmap;
                     mCacheMutableBitmap = cacheMutableBitmap;
-                    for (int i = 0; i <= 10; i++) {
+                    for (int i = 0; i <= fixSize; i++) {
                         EveryMove move = mEveryMoves.remove(0);
                         fixMovesToBitmap(mDrawCanvas2, move);
                     }
@@ -906,9 +898,9 @@ public class MarkableImageView extends PhotoView {
 
     public void save() {
         //do save
-        String fileName = "";
-        String filePath = "";
-        new SaveTask(fileName, filePath, mMainBitmap,mMutableBitmap).execute();
+//        String fileName = "";
+//        String filePath = "";
+//        new SaveTask(fileName, filePath, mMainBitmap, mMutableBitmap).execute();
     }
 
     class SaveTask extends AsyncTask<Void, Void, Void> {
@@ -947,6 +939,53 @@ public class MarkableImageView extends PhotoView {
 
     public interface OnSaveCompleteListener {
         void onComplete(String path, String fileName);
+    }
+
+    private OnButtonStateListener mOnButtonStateListener;
+
+    public void setOnButtonStateListener(OnButtonStateListener onButtonStateListener) {
+        this.mOnButtonStateListener = onButtonStateListener;
+    }
+
+    public interface OnButtonStateListener {
+        void onUpdateRedoUndoState(int id, boolean enable);
+
+        void onUpdateSavetate(int id, boolean enable);
+    }
+
+    private CopyOnWriteArrayList<EveryMove> mRedoStack = new CopyOnWriteArrayList<>();
+    private int mUndoButtonResId = -1;
+    private int mRedoButtonResId = -1;
+    private int mSaveButtonResId = -1;
+
+    public void setUndoButtonResId(int undoButtonResId) {
+        this.mUndoButtonResId = undoButtonResId;
+    }
+
+    public void setRedoButtonResId(int redoButtonResId) {
+        this.mRedoButtonResId = redoButtonResId;
+    }
+
+    public void setSaveButtonResId(int saveButtonResId) {
+        this.mSaveButtonResId = saveButtonResId;
+    }
+
+    public void undo() {
+        if (mUndoButtonResId == -1 || mRedoButtonResId == -1) {
+            throw new RuntimeException("please call setUndoButtonResId and setRedoButtonResId " +
+                    "first");
+        }
+
+        updateRedoUndoState();
+    }
+
+    public void redo() {
+        if (mUndoButtonResId == -1 || mRedoButtonResId == -1) {
+            throw new RuntimeException("please call setUndoButtonResId and setRedoButtonResId " +
+                    "first");
+        }
+
+        updateRedoUndoState();
     }
 
 }
