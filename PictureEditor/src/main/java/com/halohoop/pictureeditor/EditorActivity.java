@@ -104,12 +104,12 @@ public class EditorActivity extends AppCompatActivity
         mIFragments = createFragments();
         mNoScrollVp.setAdapter(new ToolDetailsPagerAdapter(getSupportFragmentManager(),
                 mIFragments));
-        mNoScrollVp.setCurrentItem(ActionsChooseView.FRAGMENT_PEN, true);
+        mNoScrollVp.setCurrentItem(ActionsChooseView.FRAGMENT_PEN, false);
         new Thread(new Runnable() {
             @Override
             public void run() {
                 SystemClock.sleep(250);
-                Bitmap bitmap = BitmapFactory.decodeResource(getResources(), R.mipmap.test_pic4);
+                Bitmap bitmap = BitmapFactory.decodeResource(getResources(), R.mipmap.ic_launcher);
 //                Bitmap mosaicBitmap = BitmapUtils.mosaicIt(bitmap, 10);
                 Bitmap mosaicRect = BitmapFactory.decodeResource(getResources(), R.mipmap
                         .mosaic_rect);
@@ -173,7 +173,7 @@ public class EditorActivity extends AppCompatActivity
         return iFragments;
     }
 
-    private int mCurrentIndex = 0;
+    private int mCurrentIndex = ActionsChooseView.FRAGMENT_PEN;
 
     @Override
     public void onActionSelected(int index) {
@@ -188,13 +188,13 @@ public class EditorActivity extends AppCompatActivity
             PenceilAndRubberView.MODE mode = mPenceilAndRubberView.getMode();
             if (mode == PenceilAndRubberView.MODE.PENCEILON) {
                 mMarkableImageView.setEditMode(MarkableImageView.EDIT_MODE.PEN);
-                mNoScrollVp.setCurrentItem(ActionsChooseView.FRAGMENT_PEN, true);
+                mNoScrollVp.setCurrentItem(ActionsChooseView.FRAGMENT_PEN, false);
             } else if (mode == PenceilAndRubberView.MODE.RUBBERON) {
                 mMarkableImageView.setEditMode(MarkableImageView.EDIT_MODE.RUBBER);
-                mNoScrollVp.setCurrentItem(ActionsChooseView.FRAGMENT_RUBBER, true);
+                mNoScrollVp.setCurrentItem(ActionsChooseView.FRAGMENT_RUBBER, false);
             }
         } else {
-            mNoScrollVp.setCurrentItem(index);
+            mNoScrollVp.setCurrentItem(index, false);
         }
         if (index == ActionsChooseView.FRAGMENT_MOSAIC) {
             mMarkableImageView.setEditMode(MarkableImageView.EDIT_MODE.MOSAIC);
@@ -240,7 +240,7 @@ public class EditorActivity extends AppCompatActivity
         if (v.getId() == R.id.color_show_view_in_pen_and_rubber
                 || v.getId() == R.id.color_show_view_in_shapes_group
                 || v.getId() == R.id.color_show_view_in_text_detail_container) {
-            mNoScrollVp.setCurrentItem(ActionsChooseView.FRAGMENT_COLOR_PICKER, true);
+            mNoScrollVp.setCurrentItem(ActionsChooseView.FRAGMENT_COLOR_PICKER, false);
         } else if (v.getId() == R.id.iv_add_text) {
         } else if (v.getId() == R.id.iv_cancel) {
             if (mMarkableImageView.isEdited()) {
@@ -283,7 +283,7 @@ public class EditorActivity extends AppCompatActivity
 
     @Override
     public void onColorPickedDone() {
-        mNoScrollVp.setCurrentItem(mCurrentIndex, true);
+        mNoScrollVp.setCurrentItem(mCurrentIndex, false);
     }
 
     @Override
@@ -304,11 +304,11 @@ public class EditorActivity extends AppCompatActivity
     @Override
     public void onModeSelected(PenceilAndRubberView.MODE mode) {
         if (mode == PenceilAndRubberView.MODE.PENCEILON) {
-            mNoScrollVp.setCurrentItem(ActionsChooseView.FRAGMENT_PEN, true);
+            mNoScrollVp.setCurrentItem(ActionsChooseView.FRAGMENT_PEN, false);
             mCurrentIndex = ActionsChooseView.FRAGMENT_PEN;
             mMarkableImageView.setEditMode(MarkableImageView.EDIT_MODE.PEN);
         } else if (mode == PenceilAndRubberView.MODE.RUBBERON) {
-            mNoScrollVp.setCurrentItem(ActionsChooseView.FRAGMENT_RUBBER, true);
+            mNoScrollVp.setCurrentItem(ActionsChooseView.FRAGMENT_RUBBER, false);
             mCurrentIndex = ActionsChooseView.FRAGMENT_RUBBER;
             mMarkableImageView.setEditMode(MarkableImageView.EDIT_MODE.RUBBER);
         }
