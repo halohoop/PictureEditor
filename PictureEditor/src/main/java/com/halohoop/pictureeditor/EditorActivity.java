@@ -24,6 +24,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.SeekBar;
+import android.widget.Toast;
 
 import com.halohoop.pictureeditor.controllers.ToolDetailsPagerAdapter;
 import com.halohoop.pictureeditor.pieces.ColorPickerDetailFragment;
@@ -44,6 +45,8 @@ import com.halohoop.pictureeditor.widgets.beans.Shape;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import static com.halohoop.pictureeditor.R.styleable.PenceilAndRubberView;
 
 public class EditorActivity extends AppCompatActivity
         implements ActionsChooseView.OnSelectedListener,
@@ -248,14 +251,26 @@ public class EditorActivity extends AppCompatActivity
                 finish();
             }
         } else if (v.getId() == R.id.iv_save) {
-            LogUtils.i("iv_save");
             mMarkableImageView.save();
+            mIsSaving = true;
         } else if (v.getId() == R.id.iv_stepbackward) {
-            LogUtils.i("iv_stepbackward");
             mMarkableImageView.undo();
         } else if (v.getId() == R.id.iv_stepforward) {
-            LogUtils.i("iv_stepforward");
             mMarkableImageView.redo();
+        }
+    }
+
+    private boolean mIsSaving = false;
+
+    @Override
+    public void onBackPressed() {
+        if (mIsSaving) {
+            return;
+        }
+        if (mMarkableImageView.isEdited()) {
+            alertDialog();
+        } else {
+            super.onBackPressed();
         }
     }
 
@@ -292,9 +307,11 @@ public class EditorActivity extends AppCompatActivity
     public void onModeSelected(PenceilAndRubberView.MODE mode) {
         if (mode == PenceilAndRubberView.MODE.PENCEILON) {
             mNoScrollVp.setCurrentItem(ActionsChooseView.FRAGMENT_PEN, true);
+            mCurrentIndex = ActionsChooseView.FRAGMENT_PEN;
             mMarkableImageView.setEditMode(MarkableImageView.EDIT_MODE.PEN);
         } else if (mode == PenceilAndRubberView.MODE.RUBBERON) {
             mNoScrollVp.setCurrentItem(ActionsChooseView.FRAGMENT_RUBBER, true);
+            mCurrentIndex = ActionsChooseView.FRAGMENT_RUBBER;
             mMarkableImageView.setEditMode(MarkableImageView.EDIT_MODE.RUBBER);
         }
     }
@@ -322,8 +339,21 @@ public class EditorActivity extends AppCompatActivity
     }
 
     @Override
-    public void onComplete(String path, String fileName) {
-        //Notification
+    public void onSaveStart(String path, String fileName) {
+        
+    }
+
+    @Override
+    public void onSaveComplete(Boolean isSaveSucc, String path, String fileName) {
+        if (isSaveSucc) {
+            //Notification
+            Toast.makeText(this, "fileName:" + fileName + "--" + isSaveSucc, Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    @Override
+    public void onSaveFail(String path, String fileName) {
+
     }
 
     @Override

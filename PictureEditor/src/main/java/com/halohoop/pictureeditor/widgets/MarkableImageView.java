@@ -32,6 +32,12 @@ import android.view.MotionEvent;
 import com.halohoop.pictureeditor.utils.LogUtils;
 import com.halohoop.pictureeditor.widgets.beans.Shape;
 
+import java.io.BufferedOutputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 import uk.co.senab.photoview.PhotoView;
@@ -360,7 +366,8 @@ public class MarkableImageView extends PhotoView {
         if (mOnButtonStateListener != null) {
             mOnButtonStateListener.onUpdateRedoUndoState(mRedoButtonResId, mRedoStack.size() > 0);
             mOnButtonStateListener.onUpdateRedoUndoState(mUndoButtonResId, mEveryMoves.size() > 0);
-            mOnButtonStateListener.onUpdateSavetate(mSaveButtonResId, mEveryMoves.size() > 0);
+            mOnButtonStateListener.onUpdateSavetate(mSaveButtonResId, mEveryMoves.size() > 0
+                    || (mCacheMutableBitmap != null && !mCacheMutableBitmap.isRecycled()));
         }
     }
 
@@ -889,12 +896,12 @@ public class MarkableImageView extends PhotoView {
 
     public void save() {
         //do save
-//        String fileName = "";
-//        String filePath = "";
-//        new SaveTask(fileName, filePath, mMainBitmap, mMutableBitmap).execute();
+        String fileName = "";
+        String filePath = "";
+        new SaveTask(fileName, filePath, mMainBitmap, mMutableBitmap).execute();
     }
 
-    class SaveTask extends AsyncTask<Void, Void, Void> {
+    class SaveTask extends AsyncTask<Void, Integer, Boolean> {
 
         private String fileName = "";
         private String filePath = "";
@@ -907,17 +914,62 @@ public class MarkableImageView extends PhotoView {
         }
 
         @Override
-        protected Void doInBackground(Void... params) {
-            //new a notification
-            return null;
+        protected void onPreExecute() {
+            if (mOnSaveCompleteListener != null) {
+                mOnSaveCompleteListener.onSaveStart(filePath, fileName);
+            }
         }
 
         @Override
-        protected void onPostExecute(Void aVoid) {
-            super.onPostExecute(aVoid);
+        protected Boolean doInBackground(Void... params) {
+            boolean isSaveSucc = false;
+            Bitmap saveBitmap = Bitmap.createBitmap(savedBitmaps[0].getWidth(), savedBitmaps[0].getHeight(), Bitmap.Config.ARGB_8888);
+            Canvas canvas = new Canvas(saveBitmap);
+            for (int i = 0; i < savedBitmaps.length; i++) {
+                Bitmap bitmap = savedBitmaps[i];
+                canvas.drawBitmap(bitmap, 0, 0, null);
 
+            }
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            saveBitmap.compress(Bitmap.CompressFormat.PNG, 100, baos);
+            File file = new File(filePath);
+            //把数据转为为字节数组
+            byte[] byteArray = baos.toByteArray();
+            BufferedOutputStream bos = null;
+            try {
+                bos = new BufferedOutputStream(new FileOutputStream(file));
+                bos.write(byteArray);
+            } catch (FileNotFoundException e) {
+                if (mOnSaveCompleteListener != null) {
+                    mOnSaveCompleteListener.onSaveFail(filePath, fileName);
+                }
+                e.printStackTrace();
+            } catch (IOException e) {
+                if (mOnSaveCompleteListener != null) {
+                    mOnSaveCompleteListener.onSaveFail(filePath, fileName);
+                }
+                e.printStackTrace();
+            } finally {
+                try {
+                    baos.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+                try {
+                    bos.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+
+            }
+            return isSaveSucc;
+        }
+
+        @Override
+        protected void onPostExecute(Boolean isSaveSucc) {
+            super.onPostExecute(isSaveSucc);
             if (mOnSaveCompleteListener != null) {
-                mOnSaveCompleteListener.onComplete("filePath", "fileName");
+                mOnSaveCompleteListener.onSaveComplete(isSaveSucc, filePath, fileName);
             }
         }
     }
@@ -929,7 +981,11 @@ public class MarkableImageView extends PhotoView {
     }
 
     public interface OnSaveCompleteListener {
-        void onComplete(String path, String fileName);
+        void onSaveStart(String path, String fileName);
+
+        void onSaveComplete(Boolean isSaveSucc, String path, String fileName);
+
+        void onSaveFail(String path, String fileName);
     }
 
     private OnButtonStateListener mOnButtonStateListener;
@@ -971,7 +1027,7 @@ public class MarkableImageView extends PhotoView {
         p.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.CLEAR));
         mDrawCanvas.drawPaint(p);
         //redraw on empty canvas
-        //先将已固定部分画上去
+        //先将已固定部分画上去，如果有的话
         if (mCacheMutableBitmap != null && !mCacheMutableBitmap.isRecycled()) {
             mDrawCanvas.drawBitmap(mCacheMutableBitmap, 0, 0, null);
         }
