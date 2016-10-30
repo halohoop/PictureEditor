@@ -26,6 +26,7 @@ import android.graphics.RectF;
 import android.graphics.Region;
 import android.graphics.Shader;
 import android.os.AsyncTask;
+import android.os.Environment;
 import android.util.AttributeSet;
 import android.view.MotionEvent;
 
@@ -896,8 +897,8 @@ public class MarkableImageView extends PhotoView {
 
     public void save() {
         //do save
-        String fileName = "";
-        String filePath = "";
+        String fileName = System.currentTimeMillis() + ".png";
+        String filePath = Environment.getExternalStorageDirectory().getAbsolutePath() + File.separator + fileName;
         new SaveTask(fileName, filePath, mMainBitmap, mMutableBitmap).execute();
     }
 
@@ -939,24 +940,39 @@ public class MarkableImageView extends PhotoView {
             try {
                 bos = new BufferedOutputStream(new FileOutputStream(file));
                 bos.write(byteArray);
+                isSaveSucc = true;
             } catch (FileNotFoundException e) {
-                if (mOnSaveCompleteListener != null) {
-                    mOnSaveCompleteListener.onSaveFail(filePath, fileName);
-                }
+                post(new Runnable() {
+                    @Override
+                    public void run() {
+                        if (mOnSaveCompleteListener != null) {
+                            mOnSaveCompleteListener.onSaveFail(filePath, fileName);
+                        }
+                    }
+                });
                 e.printStackTrace();
             } catch (IOException e) {
-                if (mOnSaveCompleteListener != null) {
-                    mOnSaveCompleteListener.onSaveFail(filePath, fileName);
-                }
+                post(new Runnable() {
+                    @Override
+                    public void run() {
+                        if (mOnSaveCompleteListener != null) {
+                            mOnSaveCompleteListener.onSaveFail(filePath, fileName);
+                        }
+                    }
+                });
                 e.printStackTrace();
             } finally {
                 try {
-                    baos.close();
+                    if (baos != null) {
+                        baos.close();
+                    }
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
                 try {
-                    bos.close();
+                    if (bos != null) {
+                        bos.close();
+                    }
                 } catch (IOException e) {
                     e.printStackTrace();
                 }

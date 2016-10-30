@@ -46,8 +46,6 @@ import com.halohoop.pictureeditor.widgets.beans.Shape;
 import java.util.ArrayList;
 import java.util.List;
 
-import static com.halohoop.pictureeditor.R.styleable.PenceilAndRubberView;
-
 public class EditorActivity extends AppCompatActivity
         implements ActionsChooseView.OnSelectedListener,
         SeekBar.OnSeekBarChangeListener,
@@ -129,7 +127,7 @@ public class EditorActivity extends AppCompatActivity
         @Override
         public void handleMessage(Message msg) {
             if (msg.what == MOSAIC_BITMAP_DONE) {
-                mProgressContainer.setVisibility(View.GONE);
+                mProgressContainer.setVisibility(View.INVISIBLE);
                 Bitmap bitmap = (Bitmap) msg.obj;
                 mMarkableImageView.setImageBitmap(bitmap);
             }
@@ -340,7 +338,7 @@ public class EditorActivity extends AppCompatActivity
 
     @Override
     public void onSaveStart(String path, String fileName) {
-        
+        mProgressContainer.setVisibility(View.VISIBLE);
     }
 
     @Override
@@ -348,12 +346,15 @@ public class EditorActivity extends AppCompatActivity
         if (isSaveSucc) {
             //Notification
             Toast.makeText(this, "fileName:" + fileName + "--" + isSaveSucc, Toast.LENGTH_SHORT).show();
+            finish();
+        }else{
+            Toast.makeText(this, "fileName:" + fileName + "--" + isSaveSucc, Toast.LENGTH_SHORT).show();
         }
     }
 
     @Override
     public void onSaveFail(String path, String fileName) {
-
+        Toast.makeText(this, "fileName:" + fileName + "--fail", Toast.LENGTH_SHORT).show();
     }
 
     @Override
