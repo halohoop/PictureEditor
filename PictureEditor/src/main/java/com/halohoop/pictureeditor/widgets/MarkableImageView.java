@@ -20,6 +20,8 @@ import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Path;
 import android.graphics.PointF;
+import android.graphics.PorterDuff;
+import android.graphics.PorterDuffXfermode;
 import android.graphics.RectF;
 import android.graphics.Region;
 import android.graphics.Shader;
@@ -58,7 +60,6 @@ public class MarkableImageView extends PhotoView {
     private PointF mMidPoint;
     //圆角矩形角半径
     private float radiusCornor = 5.0f;
-    private Canvas mDrawCanvas2;
     //头部head bar的高度，单位dp
     private final int HEAD_BAR_HEIGHT = 60;
 
@@ -404,40 +405,27 @@ public class MarkableImageView extends PhotoView {
 
     private void pushIntoMoves(EveryMove everyMove) {
         mEveryMoves.add(everyMove);
-        //只要做了新操作就把redo集合清空
-        mRedoStack.clear();
         int maxSize = 20;
         final int fixSize = 10;
         if (mEveryMoves.size() > maxSize) {
             //将前部分(maxSize-maxSize)固定到最终的图片上
-            new Thread(new Runnable() {
-
-                @Override
-                public void run() {
-                    Bitmap cacheMutableBitmap = Bitmap.createBitmap(
-                            mMainBitmap.getWidth(),
-                            mMainBitmap.getHeight(), Bitmap.Config.ARGB_8888);
-                    mDrawCanvas2 = new Canvas(cacheMutableBitmap);
-                    if (mCacheMutableBitmap != null && !mCacheMutableBitmap.isRecycled()) {
-                        mDrawCanvas2.drawBitmap(mCacheMutableBitmap, 0, 0, null);
-                    }
-                    final Bitmap oldBitmap = mCacheMutableBitmap;
-                    mCacheMutableBitmap = cacheMutableBitmap;
-                    for (int i = 0; i <= fixSize; i++) {
-                        EveryMove move = mEveryMoves.remove(0);
-                        fixMovesToBitmap(mDrawCanvas2, move);
-                    }
-                    post(new Runnable() {
-                        @Override
-                        public void run() {
-                            invalidate();
-                            if (oldBitmap != null && !oldBitmap.isRecycled()) {
-                                oldBitmap.recycle();
-                            }
-                        }
-                    });
-                }
-            }).start();
+            Bitmap cacheMutableBitmap = Bitmap.createBitmap(
+                    mMainBitmap.getWidth(),
+                    mMainBitmap.getHeight(), Bitmap.Config.ARGB_8888);
+            Canvas tmpDrawCanvas = new Canvas(cacheMutableBitmap);
+            if (mCacheMutableBitmap != null && !mCacheMutableBitmap.isRecycled()) {
+                tmpDrawCanvas.drawBitmap(mCacheMutableBitmap, 0, 0, null);
+            }
+            Bitmap oldBitmap = mCacheMutableBitmap;
+            mCacheMutableBitmap = cacheMutableBitmap;
+            for (int i = 0; i <= fixSize; i++) {
+                EveryMove move = mEveryMoves.remove(0);
+                fixMovesToBitmap(tmpDrawCanvas, move);
+            }
+            invalidate();
+            if (oldBitmap != null && !oldBitmap.isRecycled()) {
+                oldBitmap.recycle();
+            }
         }
     }
 
@@ -493,6 +481,8 @@ public class MarkableImageView extends PhotoView {
         if (mEveryMoves.size() <= 0) {
             return;
         }
+        //只要做了新操作就把redo集合清空
+        mRedoStack.clear();
         EveryMove everyMove = mEveryMoves.get(mEveryMoves.size() - 1);
         if (everyMove.mEditMode == EDIT_MODE.PEN) {
             handleActionMovePenRubberAndMosaic(realMovePosX, realMovePosY, everyMove);
@@ -712,6 +702,7 @@ public class MarkableImageView extends PhotoView {
         canvas.drawPath(everyMove.mPath, mDrawPaint);
     }
 
+    //see also reCreateCacheBitmap();
     private void finalDrawOnBitmap() {
         if (mEveryMoves.size() <= 0) {
             return;
@@ -954,8 +945,11 @@ public class MarkableImageView extends PhotoView {
     }
 
     private CopyOnWriteArrayList<EveryMove> mRedoStack = new CopyOnWriteArrayList<>();
+    // 对应界面上的undo按钮的id
     private int mUndoButtonResId = -1;
+    // 对应界面上的redo按钮的id
     private int mRedoButtonResId = -1;
+    // 对应界面上的save按钮的id
     private int mSaveButtonResId = -1;
 
     public void setUndoButtonResId(int undoButtonResId) {
@@ -970,12 +964,47 @@ public class MarkableImageView extends PhotoView {
         this.mSaveButtonResId = saveButtonResId;
     }
 
+    //see also finalDrawOnBitmap();
+    private void reCreateCacheBitmap() {
+        //清屏
+        Paint p = new Paint();
+        p.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.CLEAR));
+        mDrawCanvas.drawPaint(p);
+        //redraw on empty canvas
+        //先将已固定部分画上去
+        if (mCacheMutableBitmap != null && !mCacheMutableBitmap.isRecycled()) {
+            mDrawCanvas.drawBitmap(mCacheMutableBitmap, 0, 0, null);
+        }
+        //再将可操作部分画上去
+        for (int i = 0; i < mEveryMoves.size(); i++) {
+            EveryMove everyMove = mEveryMoves.get(i);
+            if (everyMove.mEditMode == EDIT_MODE.PEN) {
+                drawPen(mDrawCanvas, everyMove);
+            } else if (everyMove.mEditMode == EDIT_MODE.RUBBER) {
+                drawRubber(mDrawCanvas, everyMove);
+            } else if (everyMove.mEditMode == EDIT_MODE.MOSAIC) {
+                drawMosaic(mDrawCanvas, everyMove);
+            } else if (everyMove.mEditMode == EDIT_MODE.SHAPE) {
+                drawShape(mDrawCanvas, everyMove);
+            }
+        }
+        resetAllPaintToMatchOutside();
+        invalidate();
+    }
+
     public void undo() {
         if (mUndoButtonResId == -1 || mRedoButtonResId == -1) {
             throw new RuntimeException("please call setUndoButtonResId and setRedoButtonResId " +
                     "first");
         }
-
+        //[do undo start]
+        //删除存储的步骤的最后一个
+        EveryMove remove = mEveryMoves.remove(mEveryMoves.size() - 1);
+        //将其加入到redo栈
+        mRedoStack.add(remove);
+        reCreateCacheBitmap();
+        //[do undo end]
+        //update state
         updateRedoUndoState();
     }
 
@@ -984,7 +1013,14 @@ public class MarkableImageView extends PhotoView {
             throw new RuntimeException("please call setUndoButtonResId and setRedoButtonResId " +
                     "first");
         }
-
+        //[do redo start]
+        //删除redo栈的最后一个
+        EveryMove remove = mRedoStack.remove(mRedoStack.size() - 1);
+        //将其加入到redo栈
+        mEveryMoves.add(remove);
+        finalDrawOnBitmap();
+        //[do redo end]
+        //update state
         updateRedoUndoState();
     }
 
