@@ -13,6 +13,7 @@
 package com.halohoop.pictureeditor;
 
 import android.content.DialogInterface;
+import android.content.pm.ActivityInfo;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.Bundle;
@@ -105,11 +106,12 @@ public class EditorActivity extends AppCompatActivity
         mNoScrollVp.setAdapter(new ToolDetailsPagerAdapter(getSupportFragmentManager(),
                 mIFragments));
         mNoScrollVp.setCurrentItem(ActionsChooseView.FRAGMENT_PEN, false);
+
         new Thread(new Runnable() {
             @Override
             public void run() {
                 SystemClock.sleep(250);
-                Bitmap bitmap = BitmapFactory.decodeResource(getResources(), R.mipmap.ic_launcher);
+                Bitmap bitmap = BitmapFactory.decodeResource(getResources(), R.mipmap.test_pic4);
 //                Bitmap mosaicBitmap = BitmapUtils.mosaicIt(bitmap, 10);
                 Bitmap mosaicRect = BitmapFactory.decodeResource(getResources(), R.mipmap
                         .mosaic_rect);
@@ -347,7 +349,7 @@ public class EditorActivity extends AppCompatActivity
             //Notification
             Toast.makeText(this, "fileName:" + fileName + "--" + isSaveSucc, Toast.LENGTH_SHORT).show();
             finish();
-        }else{
+        } else {
             Toast.makeText(this, "fileName:" + fileName + "--" + isSaveSucc, Toast.LENGTH_SHORT).show();
         }
     }

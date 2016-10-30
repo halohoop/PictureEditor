@@ -34,7 +34,9 @@ public class RubberDetailFragment extends Fragment implements IFragment {
     }
 
     public void setOnSeekBarChangeListenerOnThicknessSeekBar(SeekBar.OnSeekBarChangeListener l) {
-        mThicknessSeekBar.setOnSeekBarChangeListener(l);
+        if (mThicknessSeekBar != null) {
+            mThicknessSeekBar.setOnSeekBarChangeListener(l);
+        }
     }
 
     @Override

@@ -40,15 +40,21 @@ public class PenRubberDetailFragment extends Fragment implements IFragment {
     }
 
     public void setOnSeekBarChangeListenerOnThicknessSeekBar(SeekBar.OnSeekBarChangeListener l) {
-        mThicknessSeekBar.setOnSeekBarChangeListener(l);
+        if (mThicknessSeekBar != null) {
+            mThicknessSeekBar.setOnSeekBarChangeListener(l);
+        }
     }
 
     public void setOnSeekBarChangeListenerOnAlphaSeekBar(SeekBar.OnSeekBarChangeListener l) {
-        mAlphaSeekBar.setOnSeekBarChangeListener(l);
+        if (mAlphaSeekBar != null) {
+            mAlphaSeekBar.setOnSeekBarChangeListener(l);
+        }
     }
 
     public void setOnClickListener(View.OnClickListener onClickListener) {
-        mColorShowView.setOnClickListener(onClickListener);
+        if (mColorShowView != null) {
+            mColorShowView.setOnClickListener(onClickListener);
+        }
     }
 
     public void setColor(int color) {

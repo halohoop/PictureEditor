@@ -12,6 +12,8 @@
 
 package com.halohoop.pictureeditor.widgets;
 
+import android.content.ContentResolver;
+import android.content.ContentValues;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapShader;
@@ -25,10 +27,15 @@ import android.graphics.PorterDuffXfermode;
 import android.graphics.RectF;
 import android.graphics.Region;
 import android.graphics.Shader;
+import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Environment;
+import android.provider.MediaStore;
 import android.util.AttributeSet;
+import android.util.DisplayMetrics;
+import android.view.Display;
 import android.view.MotionEvent;
+import android.view.WindowManager;
 
 import com.halohoop.pictureeditor.utils.LogUtils;
 import com.halohoop.pictureeditor.widgets.beans.Shape;
@@ -39,6 +46,9 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.Locale;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 import uk.co.senab.photoview.PhotoView;
@@ -69,6 +79,7 @@ public class MarkableImageView extends PhotoView {
     private float radiusCornor = 5.0f;
     //头部head bar的高度，单位dp
     private final int HEAD_BAR_HEIGHT = 60;
+    private WindowManager mWindowManager;
 
     public MarkableImageView(Context context) {
         this(context, null);
@@ -80,7 +91,12 @@ public class MarkableImageView extends PhotoView {
 
     public MarkableImageView(Context context, AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
+        initNeed(context);
         initMarkableView();
+    }
+
+    private void initNeed(Context context) {
+        mWindowManager = (WindowManager) context.getSystemService(Context.WINDOW_SERVICE);
     }
 
     private Paint initDrawPaint() {
@@ -895,23 +911,41 @@ public class MarkableImageView extends PhotoView {
         float mTextSize;
     }
 
+    private static final String SCREENSHOTS_DIR_NAME = "Screenshots";
+    private static final String SCREENSHOT_FILE_NAME_TEMPLATE = "Screenshot_%s.png";
+    private static final String SCREENSHOT_SHARE_SUBJECT_TEMPLATE = "Screenshot (%s)";
+
     public void save() {
-        //do save
-        String fileName = System.currentTimeMillis() + ".png";
-        String filePath = Environment.getExternalStorageDirectory().getAbsolutePath() + File.separator + fileName;
-        new SaveTask(fileName, filePath, mMainBitmap, mMutableBitmap).execute();
+        new SaveTask(mMainBitmap, mMutableBitmap).execute();
     }
 
-    class SaveTask extends AsyncTask<Void, Integer, Boolean> {
+    class SaveImageInBackgroundData {
+        boolean isSaveSucc;
+        Uri imageUri;
+    }
+
+    class SaveTask extends AsyncTask<Void, Integer, SaveImageInBackgroundData> {
 
         private String fileName = "";
         private String filePath = "";
+        private long imageTime;
         private Bitmap[] savedBitmaps = null;
 
-        public SaveTask(String fileName, String filePath, Bitmap... savedBitmap) {
-            this.fileName = fileName;
-            this.filePath = filePath;
+        public SaveTask(Bitmap... savedBitmap) {
             this.savedBitmaps = savedBitmap;
+            // Prepare all the output metadata
+            imageTime = System.currentTimeMillis();
+            String imageDate = new SimpleDateFormat("yyyy-MM-dd-HH-mm-ss").format(new Date(imageTime));
+            fileName = String.format(Locale.ENGLISH, SCREENSHOT_FILE_NAME_TEMPLATE, imageDate);
+            //do save
+            File dir = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES), SCREENSHOTS_DIR_NAME);
+            dir.mkdirs();
+            File file = new File(dir, fileName);
+            filePath = file.getAbsolutePath();
+            Display mDisplay = mWindowManager.getDefaultDisplay();
+            DisplayMetrics mDisplayMetrics = new DisplayMetrics();
+            mDisplay.getRealMetrics(mDisplayMetrics);
+
         }
 
         @Override
@@ -922,15 +956,16 @@ public class MarkableImageView extends PhotoView {
         }
 
         @Override
-        protected Boolean doInBackground(Void... params) {
-            boolean isSaveSucc = false;
+        protected SaveImageInBackgroundData doInBackground(Void... params) {
+            SaveImageInBackgroundData saveImageInBackgroundData = new SaveImageInBackgroundData();
+            saveImageInBackgroundData.isSaveSucc = false;
             Bitmap saveBitmap = Bitmap.createBitmap(savedBitmaps[0].getWidth(), savedBitmaps[0].getHeight(), Bitmap.Config.ARGB_8888);
             Canvas canvas = new Canvas(saveBitmap);
             for (int i = 0; i < savedBitmaps.length; i++) {
                 Bitmap bitmap = savedBitmaps[i];
                 canvas.drawBitmap(bitmap, 0, 0, null);
-
             }
+            canvas.setBitmap(null);//release canvas
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
             saveBitmap.compress(Bitmap.CompressFormat.PNG, 100, baos);
             File file = new File(filePath);
@@ -940,7 +975,7 @@ public class MarkableImageView extends PhotoView {
             try {
                 bos = new BufferedOutputStream(new FileOutputStream(file));
                 bos.write(byteArray);
-                isSaveSucc = true;
+                saveImageInBackgroundData.isSaveSucc = true;
             } catch (FileNotFoundException e) {
                 post(new Runnable() {
                     @Override
@@ -976,18 +1011,43 @@ public class MarkableImageView extends PhotoView {
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
-
             }
-            return isSaveSucc;
+            return saveImageInBackgroundData;
         }
 
         @Override
-        protected void onPostExecute(Boolean isSaveSucc) {
-            super.onPostExecute(isSaveSucc);
+        protected void onPostExecute(SaveImageInBackgroundData param) {
+            super.onPostExecute(param);
+            if (param.isSaveSucc) {
+                param.imageUri = notifyMediastore(fileName, filePath, imageTime);
+                //TODO notification
+
+            }
             if (mOnSaveCompleteListener != null) {
-                mOnSaveCompleteListener.onSaveComplete(isSaveSucc, filePath, fileName);
+                mOnSaveCompleteListener.onSaveComplete(param.isSaveSucc, filePath, fileName);
             }
         }
+    }
+
+    //must be called in @mainthread
+    private Uri notifyMediastore(String imageFileName, String imageFilePath, long imageTime) {
+        // Save the screenshot to the MediaStore
+        ContentValues values = new ContentValues();
+        ContentResolver resolver = getContext().getContentResolver();
+        values.put(MediaStore.Images.ImageColumns.DATA, imageFilePath);
+        values.put(MediaStore.Images.ImageColumns.TITLE, imageFileName);
+        values.put(MediaStore.Images.ImageColumns.DISPLAY_NAME, imageFileName);
+        values.put(MediaStore.Images.ImageColumns.DATE_TAKEN, imageTime);
+        long dateSeconds = imageTime / 1000;
+        values.put(MediaStore.Images.ImageColumns.DATE_ADDED, dateSeconds);
+        values.put(MediaStore.Images.ImageColumns.DATE_MODIFIED, dateSeconds);
+        values.put(MediaStore.Images.ImageColumns.MIME_TYPE, "image/png");
+        values.put(MediaStore.Images.ImageColumns.WIDTH, mMainBitmap.getWidth());
+        values.put(MediaStore.Images.ImageColumns.HEIGHT, mMainBitmap.getHeight());
+        values.put(MediaStore.Images.ImageColumns.SIZE, new File(imageFilePath).length());
+        Uri uri = resolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values);
+        //use uri
+        return uri;
     }
 
     private OnSaveCompleteListener mOnSaveCompleteListener;

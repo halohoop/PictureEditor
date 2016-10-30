@@ -36,11 +36,15 @@ public class ShapeDetailFragment extends Fragment implements IFragment {
     }
 
     public void setListener(ShapesChooseView.OnSelectedListener onSelectedListener) {
-        mShapeChooseView.setOnSelectedListener(onSelectedListener);
+        if (mShapeChooseView != null) {
+            mShapeChooseView.setOnSelectedListener(onSelectedListener);
+        }
     }
 
     public void setOnClickListener(View.OnClickListener onClickListener) {
-        mColorShowView.setOnClickListener(onClickListener);
+        if (mColorShowView != null) {
+            mColorShowView.setOnClickListener(onClickListener);
+        }
     }
 
     public void setColor(int color) {

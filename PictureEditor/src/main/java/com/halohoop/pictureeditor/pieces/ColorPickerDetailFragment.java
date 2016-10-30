@@ -33,7 +33,9 @@ public class ColorPickerDetailFragment extends Fragment implements IFragment {
     }
 
     public void setColorPickListener(ColorPickerView.ColorPickListener colorPickListener) {
-        mColorPicker.setColorPickListener(colorPickListener);
+        if (mColorPicker != null) {
+            mColorPicker.setColorPickListener(colorPickListener);
+        }
     }
 
     public void setColorsMarginBetween(int marginBetween) {

@@ -36,8 +36,12 @@ public class TextDetailFragment extends Fragment implements IFragment {
     }
 
     public void setOnClickListener(View.OnClickListener onClickListener) {
-        mColorShowView.setOnClickListener(onClickListener);
-        mIvAddText.setOnClickListener(onClickListener);
+        if (mColorShowView != null) {
+            mColorShowView.setOnClickListener(onClickListener);
+        }
+        if (mIvAddText != null) {
+            mIvAddText.setOnClickListener(onClickListener);
+        }
     }
 
     public void setColor(int color) {

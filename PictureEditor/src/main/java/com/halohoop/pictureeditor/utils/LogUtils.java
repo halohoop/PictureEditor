@@ -20,13 +20,13 @@ public class LogUtils {
 
     public static void i(String s) {
         if (DEBUG) {
-            Log.i(TAG, TAG + "--" + s);
+            Log.i(TAG, TAG + ":" + s);
         }
     }
 
     public static void e(String s) {
         if (DEBUG) {
-            Log.e(TAG, TAG + "--" + s);
+            Log.e(TAG, TAG + ":" + s);
         }
     }
 }
