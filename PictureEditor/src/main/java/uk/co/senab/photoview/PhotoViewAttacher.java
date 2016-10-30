@@ -13,6 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *******************************************************************************/
+
+/*
+ * Copyright (C) 2016, TP-LINK TECHNOLOGIES CO., LTD.
+ *
+ * PhotoViewAttacher.java
+ *
+ * PhotoViewAttacher for PhotoView
+ *
+ * Author huanghaiqi, Created at 2016-10-01
+ *
+ * Ver 1.0, 2016-10-01, huanghaiqi, Create file.
+ */
+
 package uk.co.senab.photoview;
 
 import android.annotation.SuppressLint;
