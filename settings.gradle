@@ -1,1 +1,1 @@
-include ':PictureEditor', ':ViewPagerScrollableControl', ':PenRubberPart'
+include ':PictureEditor', ':ViewPagerScrollableControl', ':PenRubberPart', ':CustomInputDialog'
